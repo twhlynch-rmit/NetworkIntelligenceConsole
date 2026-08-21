@@ -1,0 +1,17 @@
+# env
+.env
+.env.local
+.env.*.local
+
+# os
+.DS_Store
+*:Zone.Identifier
+[Tt]humbs.db
+[Dd]esktop.ini
+
+# editor
+.vscode
+*.sw[a-p]
+
+# logs
+*.log
