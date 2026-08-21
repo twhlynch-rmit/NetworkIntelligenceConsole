@@ -1,0 +1,84 @@
+services:
+  postgres:
+    # TODO:
+
+  redis:
+    # TODO:
+
+  mock-outage-api:
+    build:
+      context: .
+      dockerfile: services/mock-outage-api/Dockerfile
+    # TODO:
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  mock-loc-api:
+    build:
+      context: .
+      dockerfile: services/mock-loc-api/Dockerfile
+    # TODO:
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  fleet-simulator:
+    build:
+      context: .
+      dockerfile: services/fleet-simulator/Dockerfile
+    # TODO:
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock-outage-api:
+        condition: service_started
+      mock-loc-api:
+        condition: service_started
+
+  public-data-adapter:
+    build:
+      context: .
+      dockerfile: services/public-data-adapter/Dockerfile
+    # TODO
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  correlator:
+    build:
+      context: .
+      dockerfile: services/correlator/Dockerfile
+    # TODO:
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      mock-outage-api:
+        condition: service_started
+      mock-loc-api:
+        condition: service_started
+
+  results-api:
+    build:
+      context: .
+      dockerfile: services/results-api/Dockerfile
+    # TODO:
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock-outage-api:
+        condition: service_started
+      mock-loc-api:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    # TODO:
+    depends_on:
+      - results-api
+
+# TODO:
