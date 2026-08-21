@@ -1,0 +1,20 @@
+{
+	"name": "nic",
+	"private": true,
+	"packageManager": "pnpm@10.6.3",
+	"scripts": {
+		"build": "pnpm -r --if-present run build",
+		"typecheck": "pnpm -r --if-present run typecheck",
+		"lint": "pnpm -r --if-present run lint",
+		"lint:fix": "pnpm -r --if-present run lint:fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "pnpm -r --if-present run test",
+		"test:unit": "pnpm -r --if-present run test:unit",
+		"test:integration": "pnpm -r --if-present run test:integration"
+	},
+	"devDependencies": {
+		"prettier": "^3.3.0",
+		"typescript": "^5.5.0"
+	}
+}
