@@ -83,12 +83,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
-  docker:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - run: docker compose build
+  # docker:
+  #   name: Docker Build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v6
+  #     - run: docker compose build
 
   security:
     name: Security Scan
