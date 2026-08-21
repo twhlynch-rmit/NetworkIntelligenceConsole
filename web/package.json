@@ -3,7 +3,12 @@
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
-	"scripts": {},
+	"scripts": {
+		"lint": "eslint src/",
+		"lint:fix": "eslint src/ --fix"
+	},
 	"dependencies": {},
-	"devDependencies": {}
+	"devDependencies": {
+		"eslint": "^9.0.0"
+	}
 }
