@@ -7,7 +7,7 @@ and Redis Streams as the internal message bus.
 | --------- | ----------------------------------------------------------------------- |
 | Language  | TypeScript (Node.js 24 LTS)                                             |
 | Structure | pnpm monorepo, shared types package (`@nic/shared`)                     |
-| Frontend  | React 18, Vite 5, TanStack Query, TailwindCSS 4, shadcn/ui, MapLibre GL |
+| Frontend  | React 19, Vite 8, TanStack Query, TailwindCSS 4, shadcn/ui, MapLibre GL |
 | Backend   | Express 4 (6 services)                                                  |
 | Databases | PostgreSQL 15 + PostGIS, Redis 7 (Streams)                              |
 | Transport | REST, WebSocket, Redis Streams (eventbus)                               |
