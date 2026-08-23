@@ -1,8 +1,32 @@
 {
 	"name": "@nic/mock-outage-api",
 	"version": "1.0.0",
+	"private": true,
 	"main": "dist/index.js",
-	"scripts": {},
-	"dependencies": {},
-	"devDependencies": {}
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"start": "node dist/index.js",
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:unit": "vitest run tests/unit",
+		"test:integration": "vitest run tests/integration",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@nic/shared": "workspace:*",
+		"cors": "^2.8.6",
+		"express": "^5.2.1",
+		"jsonwebtoken": "^9.0.3",
+		"redis": "^6.2.1"
+	},
+	"devDependencies": {
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/jsonwebtoken": "^9.0.10",
+		"@types/supertest": "^7.2.1",
+		"supertest": "^7.2.2",
+		"tsx": "^4.23.12",
+		"vitest": "^4.1.11"
+	}
 }

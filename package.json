@@ -2,32 +2,42 @@
 	"name": "nic",
 	"private": true,
 	"packageManager": "pnpm@10.6.3",
+	"engines": {
+		"node": ">=24"
+	},
 	"scripts": {
 		"build": "pnpm -r --if-present run build",
 		"typecheck": "pnpm -r --if-present run typecheck",
-		"lint": "pnpm -r --if-present run lint",
-		"lint:fix": "pnpm -r --if-present run lint:fix",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"test": "pnpm -r --if-present run test",
 		"test:unit": "pnpm -r --if-present run test:unit",
 		"test:integration": "pnpm -r --if-present run test:integration",
+		"dev": "pnpm --filter @nic/web dev",
+		"postinstall": "pnpm -r --if-present run build",
 		"prepare": "husky"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^21.2.2",
 		"@commitlint/config-conventional": "^21.2.2",
+		"@types/node": "^26.2.0",
+		"eslint": "^9.39.5",
+		"eslint-plugin-react": "^7.37.5",
+		"eslint-plugin-react-hooks": "^7.1.1",
 		"husky": "^9.1.7",
 		"lint-staged": "^17.3.0",
-		"prettier": "^3.3.0",
-		"typescript": "^5.5.0"
+		"prettier": "^3.9.6",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.67.0"
 	},
 	"lint-staged": {
 		"*.{ts,tsx}": [
 			"eslint --fix",
 			"prettier --write"
 		],
-		"*.{html,json,md,css}": [
+		"*.{html,json,md,css,yml,yaml}": [
 			"prettier --write"
 		]
 	}

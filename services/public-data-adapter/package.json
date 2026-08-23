@@ -1,8 +1,23 @@
 {
 	"name": "@nic/public-data-adapter",
 	"version": "1.0.0",
+	"private": true,
 	"main": "dist/index.js",
-	"scripts": {},
-	"dependencies": {},
-	"devDependencies": {}
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"start": "node dist/index.js",
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:unit": "vitest run tests/unit",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@nic/shared": "workspace:*",
+		"redis": "^6.2.1"
+	},
+	"devDependencies": {
+		"tsx": "^4.23.12",
+		"vitest": "^4.1.11"
+	}
 }

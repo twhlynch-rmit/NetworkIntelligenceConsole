@@ -1,17 +1,17 @@
 services:
   postgres:
-    image: postgis/postgis:15-3.4
+    image: postgis/postgis:15-3.3
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-nic}
+      POSTGRES_USER: ${POSTGRES_USER:-nic_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 5s
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-nic_user} -d ${POSTGRES_DB:-nic}']
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -24,15 +24,21 @@ services:
     command: redis-server --appendonly yes
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 3s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   mock-outage-api:
     build:
       context: .
       dockerfile: services/mock-outage-api/Dockerfile
-    # TODO:
+    ports:
+      - '3001:3001'
+    environment:
+      PORT: 3001
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
     depends_on:
       redis:
         condition: service_healthy
@@ -41,7 +47,13 @@ services:
     build:
       context: .
       dockerfile: services/mock-loc-api/Dockerfile
-    # TODO:
+    ports:
+      - '3006:3006'
+    environment:
+      PORT: 3006
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
     depends_on:
       redis:
         condition: service_healthy
@@ -50,12 +62,15 @@ services:
     build:
       context: .
       dockerfile: services/fleet-simulator/Dockerfile
-
+    ports:
+      - '3002:3002'
     environment:
-      REDIS_URL: redis://redis:6379
-      MOCK_OUTAGE_API_URL: http://mock-outage-api:3000
-      MOCK_LOC_API_URL: http://mock-loc-api:3000
-
+      PORT: 3002
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      OUTAGE_API_URL: http://mock-outage-api:3001
+      LOC_API_URL: http://mock-loc-api:3006
+      FLEET_SIZE: ${FLEET_SIZE:-1000}
     depends_on:
       redis:
         condition: service_healthy
@@ -68,10 +83,9 @@ services:
     build:
       context: .
       dockerfile: services/public-data-adapter/Dockerfile
-
     environment:
-      REDIS_URL: redis://redis:6379
-
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       redis:
         condition: service_healthy
@@ -80,32 +94,40 @@ services:
     build:
       context: .
       dockerfile: services/correlator/Dockerfile
-
     environment:
-      REDIS_URL: redis://redis:6379
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      JWT_SECRET: ${JWT_SECRET}
-
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-nic}
+      POSTGRES_USER: ${POSTGRES_USER:-nic_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      OUTAGE_API_URL: http://mock-outage-api:3001
+      LOC_API_URL: http://mock-loc-api:3006
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      mock-outage-api:
+        condition: service_started
+      mock-loc-api:
+        condition: service_started
 
   results-api:
     build:
       context: .
       dockerfile: services/results-api/Dockerfile
-
     ports:
-      - '3006:3000'
-
+      - '3005:3005'
     environment:
-      REDIS_URL: redis://redis:6379
-      MOCK_OUTAGE_API_URL: http://mock-outage-api:3000
-      MOCK_LOC_API_URL: http://mock-loc-api:3000
-      JWT_SECRET: ${JWT_SECRET}
-
+      PORT: 3005
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      OUTAGE_API_URL: http://mock-outage-api:3001
+      LOC_API_URL: http://mock-loc-api:3006
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
     depends_on:
       redis:
         condition: service_healthy
@@ -118,15 +140,11 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
-
     ports:
-      - '5173:5173'
-
+      - '3000:80'
     depends_on:
-      results-api:
-        condition: service_started
+      - results-api
 
-# TODO:
 volumes:
   postgres-data:
   redis-data:
