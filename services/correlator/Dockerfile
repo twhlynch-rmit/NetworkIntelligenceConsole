@@ -14,7 +14,7 @@ COPY services/public-data-adapter/package.json ./services/public-data-adapter/
 COPY services/results-api/package.json ./services/results-api/
 COPY web/package.json ./web/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY tsconfig.json ./
 COPY packages/shared/ ./packages/shared/
