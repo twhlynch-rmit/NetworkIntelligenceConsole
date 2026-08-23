@@ -2,6 +2,9 @@
 	"name": "nic",
 	"private": true,
 	"packageManager": "pnpm@10.6.3",
+	"engines": {
+		"node": ">=24"
+	},
 	"scripts": {
 		"build": "pnpm -r --if-present run build",
 		"typecheck": "pnpm -r --if-present run typecheck",
