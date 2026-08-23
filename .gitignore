@@ -15,3 +15,11 @@
 
 # logs
 *.log
+
+# node
+node_modules/
+
+# build
+dist/
+build/
+out/
