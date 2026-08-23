@@ -30,6 +30,20 @@
    lint-staged on staged files before each commit and commitlint on commit
    messages.
 
+## Local Infrastructure
+
+Start the local stack:
+
+```sh
+docker compose up -d --build
+```
+
+Stop the local stack:
+
+```sh
+docker compose down
+```
+
 ## Common Commands
 
 Run from the repository root. most scripts forward to each workspace with
