@@ -3,17 +3,22 @@
 Monorepo with 6 backend microservices, a React frontend,
 and Redis Streams as the internal message bus.
 
-| Layer     | Technologies                                            |
-| --------- | ------------------------------------------------------- |
-| Language  | TypeScript (Node.js 25)                                 |
-| Structure | pnpm monorepo                                           |
-| Frontend  | React 18, Vite 5, TailwindCSS 4, shadcn/ui, MapLibre GL |
-| Backend   | Express 4 (6 services)                                  |
-| Databases | PostgreSQL 15 + PostGIS, Redis 7 (Streams)              |
-| Transport | REST, WebSocket, Redis Streams (eventbus)               |
-| Infra     | Docker, docker-compose, GitHub Actions CI               |
-| Auth      | JWT (HS256)                                             |
-| Testing   | Vitest                                                  |
+| Layer     | Technologies                                                            |
+| --------- | ----------------------------------------------------------------------- |
+| Language  | TypeScript (Node.js 24 LTS)                                             |
+| Structure | pnpm monorepo, shared types package (`@nic/shared`)                     |
+| Frontend  | React 18, Vite 5, TanStack Query, TailwindCSS 4, shadcn/ui, MapLibre GL |
+| Backend   | Express 4 (6 services)                                                  |
+| Databases | PostgreSQL 15 + PostGIS, Redis 7 (Streams)                              |
+| Transport | REST, WebSocket, Redis Streams (eventbus)                               |
+| Infra     | Docker, docker-compose, GitHub Actions CI                               |
+| Auth      | JWT (HS256)                                                             |
+| Testing   | Vitest (+ Testing Library for the web)                                  |
+
+The web app fetches and caches API data with
+[TanStack Query](https://tanstack.com/query) (`QueryClientProvider` is set up in
+`web/src/App.tsx`). Types shared between services and the web live in
+`packages/shared` and are consumed as `@nic/shared`.
 
 # Architecture Diagram
 
