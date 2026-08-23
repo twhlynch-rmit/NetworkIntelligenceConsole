@@ -1,8 +1,18 @@
 {
 	"name": "@nic/fleet-simulator",
 	"version": "1.0.0",
+	"private": true,
 	"main": "dist/index.js",
-	"scripts": {},
-	"dependencies": {},
-	"devDependencies": {}
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@nic/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"vitest": "^2.0.0"
+	}
 }

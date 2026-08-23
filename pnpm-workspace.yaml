@@ -2,3 +2,6 @@ packages:
   - 'services/*'
   - 'packages/*'
   - 'web'
+
+onlyBuiltDependencies:
+  - esbuild
