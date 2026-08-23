@@ -30,6 +30,14 @@
    lint-staged on staged files before each commit and commitlint on commit
    messages.
 
+## Local Infrastructure
+
+Start the local stack:
+
+```sh
+docker compose up -d --build
+
+
 ## Common Commands
 
 Run from the repository root. most scripts forward to each workspace with
@@ -43,3 +51,4 @@ Run from the repository root. most scripts forward to each workspace with
 | `pnpm format`       | Format everything with Prettier  |
 | `pnpm format:check` | Check formatting without writing |
 | `pnpm test`         | Run all tests                    |
+```
