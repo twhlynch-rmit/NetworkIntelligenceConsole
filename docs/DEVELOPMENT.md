@@ -36,7 +36,13 @@ Start the local stack:
 
 ```sh
 docker compose up -d --build
+```
 
+Stop the local stack:
+
+```sh
+docker compose down
+```
 
 ## Common Commands
 
@@ -51,4 +57,3 @@ Run from the repository root. most scripts forward to each workspace with
 | `pnpm format`       | Format everything with Prettier  |
 | `pnpm format:check` | Check formatting without writing |
 | `pnpm test`         | Run all tests                    |
-```
