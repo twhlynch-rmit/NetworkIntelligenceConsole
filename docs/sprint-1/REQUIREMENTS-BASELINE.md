@@ -5,7 +5,7 @@
 **Prepared by:** Aditya Barot (Business Analyst)  
 **Prepared:** 21 August 2026  
 **Last updated:** 23 August 2026  
-**Status:** For Telstra review and confirmation  
+**Status:** For Telstra review and confirmation
 
 ## 1. Purpose
 
@@ -62,20 +62,20 @@ The point of the feature is not just to show several data sources on one screen.
 
 ## 5. Functional requirements
 
-| ID | Requirement |
-|---|---|
-| FR-01 | The system must use simulated SafeCall pendant/device data rather than real customer telemetry. |
-| FR-02 | The system must include a standalone mocked Telstra Outage API based on the supplied API contract. |
-| FR-03 | The system must use at least two real Australian public-data feeds. |
+| ID    | Requirement                                                                                                 |
+| ----- | ----------------------------------------------------------------------------------------------------------- |
+| FR-01 | The system must use simulated SafeCall pendant/device data rather than real customer telemetry.             |
+| FR-02 | The system must include a standalone mocked Telstra Outage API based on the supplied API contract.          |
+| FR-03 | The system must use at least two real Australian public-data feeds.                                         |
 | FR-04 | The system must combine device, outage, and public-event information as part of the incident investigation. |
-| FR-05 | The Root Cause Correlator must produce a likely-cause result for the incident. |
-| FR-06 | The result must include a confidence indication. |
-| FR-07 | The result must show the evidence that contributed to the conclusion. |
-| FR-08 | The console must give the operator a recommended next action. |
-| FR-09 | The dashboard must show the device status and last known location. |
-| FR-10 | The dashboard must show relevant geographic and risk context. |
-| FR-11 | The solution must include a geospatial/map view. |
-| FR-12 | The core scenario must be repeatable as a scripted demonstration. |
+| FR-05 | The Root Cause Correlator must produce a likely-cause result for the incident.                              |
+| FR-06 | The result must include a confidence indication.                                                            |
+| FR-07 | The result must show the evidence that contributed to the conclusion.                                       |
+| FR-08 | The console must give the operator a recommended next action.                                               |
+| FR-09 | The dashboard must show the device status and last known location.                                          |
+| FR-10 | The dashboard must show relevant geographic and risk context.                                               |
+| FR-11 | The solution must include a geospatial/map view.                                                            |
+| FR-12 | The core scenario must be repeatable as a scripted demonstration.                                           |
 
 Detailed API fields, validation rules, error responses, and data mappings will be documented separately during the API contract review.
 
