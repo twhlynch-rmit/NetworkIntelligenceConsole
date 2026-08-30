@@ -1,0 +1,406 @@
+openapi: 3.2.0
+info:
+  title: Results API
+  description: |
+    Serves correlation verdicts and map overlay data to the Network Intelligence
+    Console, and broadcasts real-time updates over WebSocket.
+    Stores verdicts and reads outage/public-event overlays for the dashboard.
+    This is the only service the web frontend talks to directly.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3005
+    description: Local development
+
+security: []
+tags:
+  - name: Verdicts
+    description: Correlation verdicts for device events
+  - name: Overlays
+    description: Map overlay data for outages and public events
+  - name: Stats
+    description: Fleet aggregate statistics
+  - name: System
+    description: Health checks, service status, and WebSocket updates
+
+paths:
+  /results-api/v0/health-check:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /results-api/v0/verdicts:
+    get:
+      summary: List correlation verdicts
+      tags: [Verdicts]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/DeviceStatus'
+        - name: action
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/RecommendedAction'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Page of verdicts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verdicts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verdict'
+                  total:
+                    type: integer
+
+  /results-api/v0/verdicts/{deviceId}:
+    get:
+      summary: Get the verdict for a device
+      tags: [Verdicts]
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device verdict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verdict'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /results-api/v0/stats:
+    get:
+      summary: Fleet aggregate statistics
+      tags: [Stats]
+      responses:
+        '200':
+          description: Summary counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FleetStats'
+
+  /results-api/v0/overlays:
+    get:
+      summary: Combined map overlay data
+      tags: [Overlays]
+      responses:
+        '200':
+          description: Outages and public events for the map
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  outages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OutageOverlay'
+                  publicEvents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicEventOverlay'
+                  fetchedAt:
+                    type: string
+                    format: date-time
+
+  /results-api/v0/overlays/outages:
+    get:
+      summary: Outage overlays
+      tags: [Overlays]
+      responses:
+        '200':
+          description: Active outages with polygons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OutageOverlay'
+
+  /results-api/v0/overlays/public-events:
+    get:
+      summary: Public event overlays
+      tags: [Overlays]
+      responses:
+        '200':
+          description: VicEmergency and BOM events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicEventOverlay'
+
+  /ws:
+    get:
+      summary: WebSocket - live updates
+      description: |
+        Real-time verdict and overlay updates via WebSocket.
+        Message types: `verdicts-update` (full refresh) and `overlays-update`.
+        Uses WebSocket protocol for low-latency streaming.
+      tags: [System]
+      responses:
+        '101':
+          description: WebSocket upgrade accepted
+
+components:
+  schemas:
+    DeviceStatus:
+      type: string
+      description: Current connectivity status of the device
+      enum:
+        - ONLINE
+        - MOVING
+        - LOW_BATTERY
+        - SILENT
+        - OFFLINE
+
+    RecommendedAction:
+      type: string
+      description: Recommended action for the operator
+      enum:
+        - MONITOR
+        - DISPATCH_TECHNICIAN
+        - ESCALATE_TO_WELFARE_CHECK
+        - ALERT_SAFETY_COORDINATOR
+        - WAIT_FOR_MAINTENANCE
+
+    Location:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude coordinate
+          example: -37.8136
+        lon:
+          type: number
+          format: double
+          description: Longitude coordinate
+          example: 144.9631
+
+    EvidenceItem:
+      type: object
+      properties:
+        source:
+          type: string
+          description: Data source that provided this evidence
+          example: TelstraOutageAPI
+        type:
+          type: string
+          description: Type of evidence
+          example: planned-maintenance
+        endsAt:
+          type: string
+          format: date-time
+          description: When the evidence event ends
+          example: '2026-08-30T16:45:00+10:00'
+        distanceKm:
+          type: number
+          description: Distance from device to event in kilometres
+          example: 0.8
+        severity:
+          type: string
+          description: Severity level of the event
+          example: watch-and-act
+        tempC:
+          type: number
+          description: Temperature in degrees Celsius
+          example: 42
+        windKmh:
+          type: number
+          description: Wind speed in kilometres per hour
+          example: 55
+
+    Verdict:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          description: Unique identifier for the device
+          example: SC-P-4821
+        assignedTo:
+          type: string
+          description: Person or role assigned to the device
+          example: Nurse - Ballarat South
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+        lastSeenAt:
+          type: string
+          format: date-time
+          description: Timestamp of last received heartbeat
+          example: '2026-08-30T16:12:00+10:00'
+        lastKnownLocation:
+          $ref: '#/components/schemas/Location'
+        verdict:
+          type: object
+          description: Correlation verdict with cause, confidence and evidence
+          properties:
+            likelyCause:
+              type: string
+              description: Human-readable likely cause
+              example: Network outage overlapping active bushfire warning
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Confidence score between 0 and 1
+              example: 0.91
+            evidence:
+              type: array
+              description: Supporting evidence for the verdict
+              items:
+                $ref: '#/components/schemas/EvidenceItem'
+            recommendedAction:
+              $ref: '#/components/schemas/RecommendedAction'
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the verdict was generated
+          example: '2026-08-30T16:12:30+10:00'
+
+    FleetStats:
+      type: object
+      properties:
+        totalDevices:
+          type: integer
+          description: Total number of simulated devices
+          example: 1000
+        statusCounts:
+          type: object
+          description: Device counts by status
+          properties:
+            ONLINE:
+              type: integer
+              example: 850
+            MOVING:
+              type: integer
+              example: 100
+            LOW_BATTERY:
+              type: integer
+              example: 30
+            SILENT:
+              type: integer
+              example: 15
+            OFFLINE:
+              type: integer
+              example: 5
+        actionCounts:
+          type: object
+          description: Recommended action counts across all devices
+          additionalProperties:
+            type: integer
+
+    OutageOverlay:
+      type: object
+      properties:
+        outageId:
+          type: string
+          description: Unique identifier for the outage
+          example: OUT-2026-001
+        type:
+          type: string
+          description: Type of outage
+          example: planned-maintenance
+        status:
+          type: string
+          description: Current status of the outage
+          example: active
+        affectedArea:
+          type: object
+          description: GeoJSON polygon of the affected region
+        causeHint:
+          type: string
+          description: Hint about the root cause
+          example: Hardware upgrade
+        affectedDevices:
+          type: integer
+          description: Number of devices in the affected area
+          example: 45
+
+    PublicEventOverlay:
+      type: object
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for the public event
+          example: VE2026-001
+        source:
+          type: string
+          description: Data source that reported the event
+          enum: [vicEmergency, bom]
+        eventType:
+          type: string
+          description: Category of the event
+          example: bushfire
+        location:
+          $ref: '#/components/schemas/Location'
+        description:
+          type: string
+          description: Human-readable description
+          example: Bushfire warning for Ballarat region
+        severity:
+          type: string
+          description: Severity level
+          example: watch-and-act
+        publishedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the event was published
+          example: '2026-08-30T14:00:00+10:00'
+
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Service health status
+          example: ok
+        service:
+          type: string
+          description: Name of the service
+          example: results-api
+
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error message
+                example: Verdict not found for device
