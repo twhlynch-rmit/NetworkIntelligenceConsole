@@ -1,0 +1,185 @@
+openapi: 3.2.0
+info:
+  title: Public Data Adapter
+  description: |
+    Ingests at least two live Australian public data feeds (VicEmergency GeoJSON, Bureau of Meteorology)
+    Normalises them into a common event shape published to the `public-events` Redis Stream.
+    The dashboard and correlator consume the normalised events.
+    Feeds are swappable behind a consistent interface so a real source can replace a mock without downstream changes.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3003
+    description: Local development
+
+security: []
+tags:
+  - name: Events
+    description: Normalised public events from ingested data feeds
+  - name: Sources
+    description: Public data feed configuration and management
+  - name: System
+    description: Health checks and service status
+
+paths:
+  /public-data-adapter/v0/health-check:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /public-data-adapter/v0/sources:
+    get:
+      summary: List configured feeds
+      tags: [Sources]
+      responses:
+        '200':
+          description: Active public data sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Source'
+
+  /public-data-adapter/v0/events:
+    get:
+      summary: List normalised public events
+      tags: [Events]
+      parameters:
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [vicEmergency, bom]
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+            example: bushfire
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Normalised public events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicEvent'
+                  fetchedAt:
+                    type: string
+                    format: date-time
+
+  /public-data-adapter/v0/sync:
+    post:
+      summary: Force a feed refresh
+      tags: [Sources]
+      responses:
+        '202':
+          description: Refresh triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+components:
+  schemas:
+    Source:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the data source
+          enum: [vicEmergency, bom]
+        name:
+          type: string
+          description: Human-readable name of the data source
+          example: VicEmergency GeoJSON
+        licence:
+          type: string
+          description: Data licence terms
+          example: CC BY 3.0 AU
+        refreshSeconds:
+          type: integer
+          description: Polling interval in seconds
+          example: 60
+
+    PublicEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for the event
+          example: VE2026-001
+        source:
+          type: string
+          description: Data source that reported the event
+          enum: [vicEmergency, bom]
+        eventType:
+          type: string
+          description: Category of the event
+          example: bushfire
+        severity:
+          type: string
+          description: Severity level of the event
+          example: watch-and-act
+        description:
+          type: string
+          description: Human-readable description of the event
+          example: Bushfire warning for Ballarat region
+        location:
+          $ref: '#/components/schemas/Location'
+        publishedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the event was published
+          example: '2026-08-30T14:00:00+10:00'
+
+    Location:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude coordinate
+          example: -37.8136
+        lon:
+          type: number
+          format: double
+          description: Longitude coordinate
+          example: 144.9631
+
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Service health status
+          example: ok
+        service:
+          type: string
+          description: Name of the service
+          example: public-data-adapter
