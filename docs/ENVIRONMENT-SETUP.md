@@ -22,7 +22,7 @@ docker compose up -d --build
 ```
 
 - Dashboard: http://localhost:3000
-- Results API: http://localhost:3005/api/v1/health-check
+- Results API: http://localhost:3005/results-api/v0/health-check
 
 ## Environment variables
 

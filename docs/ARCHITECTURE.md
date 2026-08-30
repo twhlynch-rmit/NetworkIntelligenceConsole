@@ -38,7 +38,7 @@ server on port 3000 instead.
 
 Infrastructure: PostgreSQL `5432`, Redis `6379`, web `3000`.
 
-All HTTP services expose `GET /api/v1/health-check`.
+All HTTP services expose `GET /<service-name>/v0/health-check`.
 
 ## Architecture Diagram
 

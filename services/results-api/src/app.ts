@@ -13,7 +13,7 @@ export function createApp() {
 		res.json({ status: 'ok', service: SERVICE_NAME });
 	};
 
-	app.get('/api/v1/health-check', health);
+	app.get('/results-api/v0/health-check', health);
 	app.get('/health-check', health);
 
 	return app;

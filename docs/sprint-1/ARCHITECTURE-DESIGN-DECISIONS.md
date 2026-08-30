@@ -57,7 +57,7 @@ was made. See [ARCHITECTURE.md](../ARCHITECTURE.md).
   starting a server.
 - The Correlator and Public Data Adapter are workers and therefore do not need
   HTTP endpoints.
-- The API services expose their endpoints under `/api/v1/*`.
+- The API services expose their endpoints under `/<service-name>/v0/*`.
 
 ### Redis Streams
 
