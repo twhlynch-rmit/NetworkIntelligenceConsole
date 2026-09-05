@@ -37,6 +37,14 @@ paths:
       summary: Subscribe to Loss of Connectivity events
       description: Endpoint to subscribe to Loss of Connectivity events for specified MSISDNs.
       tags: [Loss of Connectivity]
+      parameters:
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -81,6 +89,13 @@ paths:
           schema:
             type: string
           description: Cursor returned by the previous page response
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Owned subscriptions returned
@@ -92,6 +107,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -106,6 +123,13 @@ paths:
           required: true
           schema:
             type: string
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Subscription details
@@ -115,8 +139,12 @@ paths:
                 $ref: '#/components/schemas/GetSubscriptionResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
     delete:
@@ -129,13 +157,24 @@ paths:
           required: true
           schema:
             type: string
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
       responses:
         '204':
           description: Subscription deleted
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -270,7 +309,7 @@ components:
         message:
           type: string
           description: Indicates whether all subscriptions were successful or partial_success
-          example: partial_success
+          example: successful
         subscriptions:
           type: array
           description: List of subscription results for each device
@@ -335,10 +374,6 @@ components:
 
     GetSubscriptionResponse:
       type: object
-      required:
-        - subscriptionId
-        - msisdn
-        - notificationDestination
       properties:
         subscriptionId:
           type: string
@@ -352,6 +387,15 @@ components:
           type: string
           description: Callback URL for event notifications
           example: https://test.com/
+
+    DeleteSubscriptionResponse:
+      type: object
+      properties:
+        correlationId:
+          type: string
+          description: Unique correlation ID for the request
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
 
     LossOfConnectivityEvent:
       type: object
@@ -453,6 +497,18 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     ServiceUnavailable:
       description: Downstream dependency unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    MethodNotAllowed:
+      description: Method not allowed.
       content:
         application/json:
           schema:
