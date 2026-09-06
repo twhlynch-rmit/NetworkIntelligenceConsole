@@ -72,50 +72,48 @@ A sampled VicEmergency GeoJSON response has the following structure:
 
 ```json
 {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "GeometryCollection",
-        "geometries": [
-          {
-            "type": "Point",
-            "coordinates": [147.1975, -36.75125]
-          },
-          {
-            "type": "Polygon",
-            "coordinates": [
-              ["... affected-area coordinates ..."]
-            ]
-          }
-        ]
-      },
-      "properties": {
-        "feedType": "warning",
-        "cap": {
-          "category": "Met",
-          "event": "Riverine Flood",
-          "urgency": "Expected",
-          "severity": "Minor",
-          "certainty": "Unknown",
-          "responseType": "Monitor"
-        },
-        "sourceOrg": "EMV",
-        "sourceId": "43095",
-        "id": "43095",
-        "category1": "Advice",
-        "category2": "Met",
-        "status": "Minor",
-        "name": "Advice",
-        "action": "Threat Is Reduced",
-        "location": "Kiewa River to Mongans bridge",
-        "created": "2026-09-06T10:30:24+10:00",
-        "updated": "2026-09-06T10:30:25+10:00",
-        "text": "ADVICE - RIVERINE FLOOD - Threat Is Reduced..."
-      }
-    }
-  ]
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"geometry": {
+				"type": "GeometryCollection",
+				"geometries": [
+					{
+						"type": "Point",
+						"coordinates": [147.1975, -36.75125]
+					},
+					{
+						"type": "Polygon",
+						"coordinates": [["... affected-area coordinates ..."]]
+					}
+				]
+			},
+			"properties": {
+				"feedType": "warning",
+				"cap": {
+					"category": "Met",
+					"event": "Riverine Flood",
+					"urgency": "Expected",
+					"severity": "Minor",
+					"certainty": "Unknown",
+					"responseType": "Monitor"
+				},
+				"sourceOrg": "EMV",
+				"sourceId": "43095",
+				"id": "43095",
+				"category1": "Advice",
+				"category2": "Met",
+				"status": "Minor",
+				"name": "Advice",
+				"action": "Threat Is Reduced",
+				"location": "Kiewa River to Mongans bridge",
+				"created": "2026-09-06T10:30:24+10:00",
+				"updated": "2026-09-06T10:30:25+10:00",
+				"text": "ADVICE - RIVERINE FLOOD - Threat Is Reduced..."
+			}
+		}
+	]
 }
 ```
 
@@ -135,42 +133,42 @@ A sampled response has the following structure:
 
 ```json
 {
-  "observations": {
-    "notice": [
-      {
-        "copyright": "Copyright Commonwealth of Australia 2026, Bureau of Meteorology."
-      }
-    ],
-    "header": [
-      {
-        "ID": "IDV60801",
-        "main_ID": "IDV60800",
-        "name": "Ballarat",
-        "product_name": "Weather Observations",
-        "state": "Victoria"
-      }
-    ],
-    "data": [
-      {
-        "wmo": 94852,
-        "name": "Ballarat",
-        "history_product": "IDV60801",
-        "local_date_time_full": "20260906193000",
-        "aifstime_utc": "20260906093000",
-        "lat": -37.5,
-        "lon": 143.8,
-        "apparent_t": 8.6,
-        "gust_kmh": 9,
-        "air_temp": 10.4,
-        "dewpt": 8.0,
-        "press_msl": 1023.7,
-        "rain_trace": "0.0",
-        "rel_hum": 85,
-        "wind_dir": "SW",
-        "wind_spd_kmh": 7
-      }
-    ]
-  }
+	"observations": {
+		"notice": [
+			{
+				"copyright": "Copyright Commonwealth of Australia 2026, Bureau of Meteorology."
+			}
+		],
+		"header": [
+			{
+				"ID": "IDV60801",
+				"main_ID": "IDV60800",
+				"name": "Ballarat",
+				"product_name": "Weather Observations",
+				"state": "Victoria"
+			}
+		],
+		"data": [
+			{
+				"wmo": 94852,
+				"name": "Ballarat",
+				"history_product": "IDV60801",
+				"local_date_time_full": "20260906193000",
+				"aifstime_utc": "20260906093000",
+				"lat": -37.5,
+				"lon": 143.8,
+				"apparent_t": 8.6,
+				"gust_kmh": 9,
+				"air_temp": 10.4,
+				"dewpt": 8.0,
+				"press_msl": 1023.7,
+				"rain_trace": "0.0",
+				"rel_hum": 85,
+				"wind_dir": "SW",
+				"wind_spd_kmh": 7
+			}
+		]
+	}
 }
 ```
 
@@ -187,46 +185,43 @@ Different public feeds use different structures. The Public Data Adapter should 
 ```ts
 type NormalisedSource = 'vicemergency' | 'bom';
 
-type NormalisedKind =
-  | 'warning'
-  | 'incident'
-  | 'observation';
+type NormalisedKind = 'warning' | 'incident' | 'observation';
 
 export interface NormalisedEvent {
-  id: string;
-  source: NormalisedSource;
-  kind: NormalisedKind;
+	id: string;
+	source: NormalisedSource;
+	kind: NormalisedKind;
 
-  type: string;
-  title: string;
-  description?: string;
+	type: string;
+	title: string;
+	description?: string;
 
-  severity?: string;
-  status?: 'active' | 'updated' | 'resolved' | 'unknown';
+	severity?: string;
+	status?: 'active' | 'updated' | 'resolved' | 'unknown';
 
-  location?: {
-    name?: string;
-    geometry?: GeoJSON.Geometry;
-  };
+	location?: {
+		name?: string;
+		geometry?: GeoJSON.Geometry;
+	};
 
-  observedAt?: string;
-  issuedAt?: string;
-  updatedAt?: string;
-  expiresAt?: string;
+	observedAt?: string;
+	issuedAt?: string;
+	updatedAt?: string;
+	expiresAt?: string;
 
-  measurements?: {
-    tempC?: number;
-    apparentTempC?: number;
-    windKmh?: number;
-    windGustKmh?: number;
-    windDirection?: string;
-    rainfallMm?: number;
-    relativeHumidityPct?: number;
-    pressureHpa?: number;
-  };
+	measurements?: {
+		tempC?: number;
+		apparentTempC?: number;
+		windKmh?: number;
+		windGustKmh?: number;
+		windDirection?: string;
+		rainfallMm?: number;
+		relativeHumidityPct?: number;
+		pressureHpa?: number;
+	};
 
-  sourceUrl?: string;
-  raw?: unknown;
+	sourceUrl?: string;
+	raw?: unknown;
 }
 ```
 
@@ -246,22 +241,22 @@ export interface NormalisedEvent {
 
 ## Representative Field Mapping
 
-| Normalised field | VicEmergency GeoJSON | BOM Weather Observations |
-| --- | --- | --- |
-| `id` | `properties.id` | `wmo` + observation timestamp |
-| `source` | `vicemergency` | `bom` |
-| `kind` | `properties.feedType` | `observation` |
-| `type` | `properties.cap.event` | `weather-observation` |
-| `severity` | `properties.cap.severity` | Not applicable |
-| `location.name` | `properties.location` | `name` |
-| `location.geometry` | Source GeoJSON `geometry` | Point from `lon`, `lat` |
-| `observedAt` | Not applicable | `aifstime_utc` |
-| `issuedAt` | `properties.created` | Not applicable |
-| `updatedAt` | `properties.updated` | Not applicable |
-| `measurements.tempC` | Not applicable | `air_temp` |
-| `measurements.windKmh` | Not applicable | `wind_spd_kmh` |
-| `measurements.windGustKmh` | Not applicable | `gust_kmh` |
-| `raw` | Entire `Feature` | Entire observation object |
+| Normalised field           | VicEmergency GeoJSON      | BOM Weather Observations      |
+| -------------------------- | ------------------------- | ----------------------------- |
+| `id`                       | `properties.id`           | `wmo` + observation timestamp |
+| `source`                   | `vicemergency`            | `bom`                         |
+| `kind`                     | `properties.feedType`     | `observation`                 |
+| `type`                     | `properties.cap.event`    | `weather-observation`         |
+| `severity`                 | `properties.cap.severity` | Not applicable                |
+| `location.name`            | `properties.location`     | `name`                        |
+| `location.geometry`        | Source GeoJSON `geometry` | Point from `lon`, `lat`       |
+| `observedAt`               | Not applicable            | `aifstime_utc`                |
+| `issuedAt`                 | `properties.created`      | Not applicable                |
+| `updatedAt`                | `properties.updated`      | Not applicable                |
+| `measurements.tempC`       | Not applicable            | `air_temp`                    |
+| `measurements.windKmh`     | Not applicable            | `wind_spd_kmh`                |
+| `measurements.windGustKmh` | Not applicable            | `gust_kmh`                    |
+| `raw`                      | Entire `Feature`          | Entire observation object     |
 
 ## VicEmergency Severity and Status Handling
 
@@ -278,9 +273,9 @@ For example:
 
 ```json
 {
-  "urgency": "Expected",
-  "severity": "Minor",
-  "certainty": "Unknown"
+	"urgency": "Expected",
+	"severity": "Minor",
+	"certainty": "Unknown"
 }
 ```
 
@@ -379,60 +374,56 @@ Each external source should be implemented behind the same adapter interface.
 
 ```ts
 export interface PublicDataAdapter<T> {
-  readonly source: string;
-  fetch(): Promise<T[]>;
-  normalise(record: T): NormalisedEvent;
+	readonly source: string;
+	fetch(): Promise<T[]>;
+	normalise(record: T): NormalisedEvent;
 }
 
 // VicEmergency adapter
-export class VicEmergencyAdapter
-  implements PublicDataAdapter<GeoJSON.Feature> {
+export class VicEmergencyAdapter implements PublicDataAdapter<GeoJSON.Feature> {
+	readonly source = 'vicemergency';
 
-  readonly source = 'vicemergency';
+	async fetch(): Promise<GeoJSON.Feature[]> {
+		// Fetch and validate the GeoJSON FeatureCollection.
+		return [];
+	}
 
-  async fetch(): Promise<GeoJSON.Feature[]> {
-    // Fetch and validate the GeoJSON FeatureCollection.
-    return [];
-  }
-
-  normalise(feature: GeoJSON.Feature): NormalisedEvent {
-    // Preserve source geometry for spatial correlation.
-    throw new Error('Not implemented');
-  }
+	normalise(feature: GeoJSON.Feature): NormalisedEvent {
+		// Preserve source geometry for spatial correlation.
+		throw new Error('Not implemented');
+	}
 }
 
 export interface BomObservation {
-  wmo: number;
-  name: string;
-  aifstime_utc: string;
-  lat: number;
-  lon: number;
-  air_temp?: number;
-  apparent_t?: number;
-  wind_spd_kmh?: number;
-  gust_kmh?: number;
-  wind_dir?: string;
-  rain_trace?: string;
-  rel_hum?: number;
-  press_msl?: number;
+	wmo: number;
+	name: string;
+	aifstime_utc: string;
+	lat: number;
+	lon: number;
+	air_temp?: number;
+	apparent_t?: number;
+	wind_spd_kmh?: number;
+	gust_kmh?: number;
+	wind_dir?: string;
+	rain_trace?: string;
+	rel_hum?: number;
+	press_msl?: number;
 }
 
 // BOM adapter
-export class BomAdapter
-  implements PublicDataAdapter<BomObservation> {
+export class BomAdapter implements PublicDataAdapter<BomObservation> {
+	readonly source = 'bom';
 
-  readonly source = 'bom';
+	async fetch(): Promise<BomObservation[]> {
+		// Fetch configured BOM weather observation data.
+		return [];
+	}
 
-  async fetch(): Promise<BomObservation[]> {
-    // Fetch configured BOM weather observation data.
-    return [];
-  }
-
-  normalise(record: BomObservation): NormalisedEvent {
-    // Convert station coordinates to a GeoJSON Point
-    // and map weather measurements into the common schema.
-    throw new Error('Not implemented');
-  }
+	normalise(record: BomObservation): NormalisedEvent {
+		// Convert station coordinates to a GeoJSON Point
+		// and map weather measurements into the common schema.
+		throw new Error('Not implemented');
+	}
 }
 ```
 
