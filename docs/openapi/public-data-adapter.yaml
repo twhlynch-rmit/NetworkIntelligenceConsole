@@ -133,6 +133,9 @@ components:
 
     PublicEvent:
       type: object
+      description: |
+        Normalised event shape published to the `public-events` Redis Stream.
+        The correlator consumes this to build verdicts.
       required:
         - eventId
         - source

@@ -2,10 +2,10 @@ openapi: 3.2.0
 info:
   title: Root Cause Correlator
   description: |
-    Subscribes to `device-events` and `public-events` Redis Streams plus outage data and combines every input into
-    a likely cause verdict with a confidence score and a recommended action.
+    Subscribes to `device-events` (DeviceEvent schema, see fleet-simulator.yaml) and `public-events` (PublicEvent schema, see public-data-adapter.yaml)
+    Redis Streams plus outage data and combines every input into a likely cause verdict with a confidence score and a recommended action.
     Includes MSISDN, last-known GPS, suburb/postcode so the verdict is defensible.
-    Writes verdicts to the results service.
+    Writes verdicts to the results service (Verdict schema, see results-api.yaml).
     HTTP surface is limited to health and an on-demand recompute trigger.
   version: 1.0.0
 

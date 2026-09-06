@@ -170,6 +170,56 @@ components:
         - SILENT
         - OFFLINE
 
+    DeviceEvent:
+      type: object
+      description: |
+        Message shape published to the `device-events` Redis Stream on every state change.
+        The correlator consumes this to build verdicts.
+      required:
+        - deviceId
+        - msisdn
+        - status
+        - lastKnownLocation
+        - lastSeenAt
+        - eventType
+        - timestamp
+      properties:
+        deviceId:
+          type: string
+          description: Unique identifier for the simulated device
+          example: SC-P-4821
+        msisdn:
+          type: string
+          description: AU mobile e.164 MSISDN
+          example: '61412345678'
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+        lastKnownLocation:
+          $ref: '#/components/schemas/Location'
+        lastSeenAt:
+          type: string
+          format: date-time
+          description: Timestamp of last received heartbeat
+          example: '2026-08-30T16:12:00+10:00'
+        assignedTo:
+          type: string
+          description: Person or role assigned to this device
+          example: Nurse - Ballarat South
+        eventType:
+          type: string
+          description: Type of state change that triggered this event
+          enum:
+            - heartbeat
+            - movement
+            - battery
+            - signal-loss
+            - status-change
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when this event was generated
+          example: '2026-08-30T16:12:00+10:00'
+
     Location:
       type: object
       required:
