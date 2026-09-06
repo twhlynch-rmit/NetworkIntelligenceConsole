@@ -201,6 +201,9 @@ components:
   schemas:
     ErrorResponse:
       type: object
+      required:
+        - code
+        - message-content
       properties:
         code:
           type: integer
@@ -292,6 +295,12 @@ components:
 
     SubscriptionsResponse:
       type: object
+      required:
+        - correlation-id
+        - status
+        - timeStamp
+        - message
+        - subscriptions
       properties:
         correlation-id:
           type: string
@@ -350,6 +359,8 @@ components:
 
     GetSubscriptionsResponse:
       type: object
+      required:
+        - subscriptions
       properties:
         subscriptions:
           type: array
@@ -374,6 +385,10 @@ components:
 
     GetSubscriptionResponse:
       type: object
+      required:
+        - subscriptionId
+        - msisdn
+        - notificationDestination
       properties:
         subscriptionId:
           type: string
@@ -399,6 +414,9 @@ components:
 
     LossOfConnectivityEvent:
       type: object
+      required:
+        - subscriptionId
+        - monitoringEventReports
       properties:
         subscriptionId:
           type: string
@@ -453,6 +471,9 @@ components:
 
     HealthCheckResponse:
       type: object
+      required:
+        - statusCode
+        - service
       properties:
         statusCode:
           type: integer

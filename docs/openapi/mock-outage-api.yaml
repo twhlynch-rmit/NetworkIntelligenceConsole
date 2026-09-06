@@ -128,6 +128,17 @@ components:
   schemas:
     OutageStatusItem:
       type: object
+      required:
+        - state
+        - suburb
+        - postcode
+        - start_timestamp
+        - end_timestamp
+        - root_cause
+        - duration
+        - description
+        - is_planned
+        - technology
       properties:
         state:
           type: string
@@ -172,6 +183,14 @@ components:
 
     OutageStatusResponse:
       type: object
+      required:
+        - correlation-id
+        - status
+        - timestamp
+        - past
+        - near_future
+        - far_future
+        - current
       properties:
         correlation-id:
           type: string
@@ -208,6 +227,9 @@ components:
 
     Scenario:
       type: object
+      required:
+        - name
+        - active
       properties:
         name:
           $ref: '#/components/schemas/ScenarioName'
@@ -227,6 +249,9 @@ components:
 
     HealthCheckResponse:
       type: object
+      required:
+        - statusCode
+        - service
       properties:
         statusCode:
           type: integer

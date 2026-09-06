@@ -198,6 +198,9 @@ components:
 
     Location:
       type: object
+      required:
+        - lat
+        - lon
       properties:
         lat:
           type: number
@@ -212,6 +215,9 @@ components:
 
     EvidenceItem:
       type: object
+      required:
+        - source
+        - type
       properties:
         source:
           type: string
@@ -245,6 +251,13 @@ components:
 
     Verdict:
       type: object
+      required:
+        - deviceId
+        - status
+        - lastSeenAt
+        - lastKnownLocation
+        - verdict
+        - timestamp
       properties:
         deviceId:
           type: string
@@ -266,6 +279,11 @@ components:
         verdict:
           type: object
           description: Correlation verdict with cause, confidence and evidence
+          required:
+            - likelyCause
+            - confidence
+            - evidence
+            - recommendedAction
           properties:
             likelyCause:
               type: string
@@ -292,6 +310,9 @@ components:
 
     FleetStats:
       type: object
+      required:
+        - totalDevices
+        - statusCounts
       properties:
         totalDevices:
           type: integer
@@ -324,6 +345,11 @@ components:
 
     OutageOverlay:
       type: object
+      required:
+        - outageId
+        - type
+        - status
+        - affectedArea
       properties:
         outageId:
           type: string
@@ -351,6 +377,12 @@ components:
 
     PublicEventOverlay:
       type: object
+      required:
+        - eventId
+        - source
+        - eventType
+        - location
+        - publishedAt
       properties:
         eventId:
           type: string
@@ -382,6 +414,9 @@ components:
 
     HealthCheckResponse:
       type: object
+      required:
+        - status
+        - service
       properties:
         status:
           type: string

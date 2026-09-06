@@ -109,6 +109,10 @@ components:
   schemas:
     Source:
       type: object
+      required:
+        - id
+        - name
+        - refreshSeconds
       properties:
         id:
           type: string
@@ -129,6 +133,12 @@ components:
 
     PublicEvent:
       type: object
+      required:
+        - eventId
+        - source
+        - eventType
+        - location
+        - publishedAt
       properties:
         eventId:
           type: string
@@ -160,6 +170,9 @@ components:
 
     Location:
       type: object
+      required:
+        - lat
+        - lon
       properties:
         lat:
           type: number
@@ -174,6 +187,9 @@ components:
 
     HealthCheckResponse:
       type: object
+      required:
+        - status
+        - service
       properties:
         status:
           type: string

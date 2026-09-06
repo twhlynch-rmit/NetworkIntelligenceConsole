@@ -54,6 +54,9 @@ components:
   schemas:
     HealthCheckResponse:
       type: object
+      required:
+        - status
+        - service
       properties:
         status:
           type: string

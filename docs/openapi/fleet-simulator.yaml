@@ -172,6 +172,9 @@ components:
 
     Location:
       type: object
+      required:
+        - lat
+        - lon
       properties:
         lat:
           type: number
@@ -186,6 +189,12 @@ components:
 
     Device:
       type: object
+      required:
+        - deviceId
+        - msisdn
+        - status
+        - lastKnownLocation
+        - lastSeenAt
       properties:
         deviceId:
           type: string
@@ -215,6 +224,8 @@ components:
 
     Scenario:
       type: object
+      required:
+        - name
       properties:
         name:
           $ref: '#/components/schemas/ScenarioName'
@@ -235,6 +246,9 @@ components:
 
     HealthCheckResponse:
       type: object
+      required:
+        - status
+        - service
       properties:
         status:
           type: string
