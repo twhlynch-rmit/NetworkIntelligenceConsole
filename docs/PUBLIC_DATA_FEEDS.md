@@ -7,7 +7,7 @@ Assess candidate Australian public data feeds for the Network Intelligence Conso
 The assessment focuses on:
 
 - VicEmergency warnings and incidents
-- Bureau of Meteorology weather observations
+- Bureau of Meteorology weather observations and warnings
 
 ## Candidate Feeds
 
@@ -32,10 +32,10 @@ The project brief identifies the VicEmergency GeoJSON feed as Creative Commons A
 **Suitability:**  
 High. The feed provides emergency information together with affected-area geometry, allowing the Root Cause Correlator to test whether a device's last-known GPS position overlaps an active warning area.
 
-### 2. Bureau of Meteorology Weather Observations
+### 2. Bureau of Meteorology Weather Observations and Warnings
 
 **Purpose:**  
-Provides measured weather observations that can add environmental context to emergency and outage events.
+Provides measured weather observations and structured weather warnings that add environmental context to emergency and outage events.
 
 Relevant measurements include:
 
@@ -50,10 +50,10 @@ Relevant measurements include:
 
 - Web data products
 - JSON observation products
-- XML
+- Structured XML warning products
 - FTP / data services where applicable
 
-**Preferred prototype format:** JSON weather observations.
+**Preferred prototype formats:** JSON weather observations and structured XML warning products.
 
 For the prototype, the Ballarat weather observation product (`IDV60801`) was assessed because it provides station coordinates and the measurements required by the project's hero scenario.
 
@@ -178,12 +178,51 @@ The `header` identifies the observation product and location, while `data` conta
 
 Each observation includes station coordinates and measured values such as temperature, wind speed, direction and gust.
 
+## BOM Warning Representative Payload
+
+BOM also publishes structured XML warning products. A sampled Victorian warning product (`IDV36810.xml`) contained a final flood warning for the Loddon River.
+
+A shortened representative payload is:
+
+```xml
+<product>
+  <amoc>
+    <identifier>IDV36810</identifier>
+    <issue-time-utc>2026-09-05T23:10:52Z</issue-time-utc>
+    <expiry-time>2026-09-07T02:10:52Z</expiry-time>
+    <status>O</status>
+    <phase>FIN</phase>
+  </amoc>
+
+  <warning>
+    <warning-info>
+      <text type="warning_title">
+        Final Flood Warning for the Loddon River
+      </text>
+    </warning-info>
+
+    <area description="Loddon River" type="river-basin">
+      <forecast-period>
+        <element type="severity">Below Minor</element>
+      </forecast-period>
+
+      <hazard
+        type="FLW"
+        severity="BLWMIN"
+        urgency="UNK"
+        certainty="UNK">
+      </hazard>
+    </area>
+  </warning>
+</product>
+```
+
 ## Proposed Normalised Event Shape
 
 Different public feeds use different structures. The Public Data Adapter should convert source-specific records into a common model before publishing them to Redis Streams.
 
 ```ts
-type NormalisedSource = 'vicemergency' | 'bom';
+type NormalisedSource = 'vicEmergency' | 'bom';
 
 type NormalisedKind = 'warning' | 'incident' | 'observation';
 
@@ -204,8 +243,7 @@ export interface NormalisedEvent {
 		geometry?: GeoJSON.Geometry;
 	};
 
-	observedAt?: string;
-	issuedAt?: string;
+	publishedAt: string;
 	updatedAt?: string;
 	expiresAt?: string;
 
@@ -235,28 +273,30 @@ export interface NormalisedEvent {
 
 `location.geometry` uses GeoJSON so the same model can support BOM station points and VicEmergency polygons or geometry collections.
 
-`observedAt` is used for measured observations such as BOM data, while `issuedAt`, `updatedAt` and `expiresAt` support event lifecycle and freshness handling.
+`publishedAt` provides a required timestamp for every normalised event. For VicEmergency it maps to the event creation time, BOM observations use the observation timestamp, and BOM warnings use the warning issue time.
+
+`updatedAt` and `expiresAt` remain optional because they are only available for some event types.
 
 `measurements` stores structured weather values. `raw` preserves the original source record for debugging and traceability.
 
 ## Representative Field Mapping
 
-| Normalised field           | VicEmergency GeoJSON      | BOM Weather Observations      |
-| -------------------------- | ------------------------- | ----------------------------- |
-| `id`                       | `properties.id`           | `wmo` + observation timestamp |
-| `source`                   | `vicemergency`            | `bom`                         |
-| `kind`                     | `properties.feedType`     | `observation`                 |
-| `type`                     | `properties.cap.event`    | `weather-observation`         |
-| `severity`                 | `properties.cap.severity` | Not applicable                |
-| `location.name`            | `properties.location`     | `name`                        |
-| `location.geometry`        | Source GeoJSON `geometry` | Point from `lon`, `lat`       |
-| `observedAt`               | Not applicable            | `aifstime_utc`                |
-| `issuedAt`                 | `properties.created`      | Not applicable                |
-| `updatedAt`                | `properties.updated`      | Not applicable                |
-| `measurements.tempC`       | Not applicable            | `air_temp`                    |
-| `measurements.windKmh`     | Not applicable            | `wind_spd_kmh`                |
-| `measurements.windGustKmh` | Not applicable            | `gust_kmh`                    |
-| `raw`                      | Entire `Feature`          | Entire observation object     |
+| Normalised field       | VicEmergency GeoJSON                  | BOM Observations            | BOM Warnings                     |
+| ---------------------- | ------------------------------------- | --------------------------- | -------------------------------- |
+| `id`                   | `properties.id`                       | `wmo` + timestamp           | `amoc.identifier`                |
+| `source`               | `vicEmergency`                        | `bom`                       | `bom`                            |
+| `kind`                 | Mapped from `properties.feedType`     | `observation`               | `warning`                        |
+| `type`                 | `properties.cap.event`                | `weather-observation`       | Mapped from hazard type          |
+| `title`                | `properties.name` / event information | Generated from station name | `warning_title`                  |
+| `severity`             | `properties.cap.severity`             | Not applicable              | Warning severity                 |
+| `location.name`        | `properties.location`                 | Station name                | Warning area description         |
+| `location.geometry`    | Source GeoJSON geometry               | Point from `lon`, `lat`     | Not available in sampled warning |
+| `publishedAt`          | `properties.created`                  | `aifstime_utc`              | `amoc.issue-time-utc`            |
+| `updatedAt`            | `properties.updated`                  | Not applicable              | Not applicable                   |
+| `expiresAt`            | Source expiry where available         | Not applicable              | `amoc.expiry-time`               |
+| `measurements.tempC`   | Not applicable                        | `air_temp`                  | Not applicable                   |
+| `measurements.windKmh` | Not applicable                        | `wind_spd_kmh`              | Not applicable                   |
+| `raw`                  | Entire `Feature`                      | Entire observation object   | Entire warning product           |
 
 ## VicEmergency Severity and Status Handling
 
@@ -290,7 +330,7 @@ A VicEmergency warning feature can be normalised conceptually as:
 ```ts
 {
   id: '43095',
-  source: 'vicemergency',
+  source: 'vicEmergency',
   kind: 'warning',
   type: 'Riverine Flood',
   title: 'Advice',
@@ -302,8 +342,7 @@ A VicEmergency warning feature can be normalised conceptually as:
     geometry: originalFeature.geometry
   },
 
-  issuedAt: '2026-09-06T10:30:24+10:00',
-  updatedAt: '2026-09-06T10:30:25+10:00',
+  publishedAt: '2026-09-06T10:30:24+10:00',
 
   raw: originalFeature
 }
@@ -347,7 +386,7 @@ A BOM observation can be normalised conceptually as:
     }
   },
 
-  observedAt: '2026-09-06T09:30:00Z',
+  publishedAt: '2026-09-06T09:30:00Z',
 
   measurements: {
     tempC: 10.4,
@@ -381,7 +420,7 @@ export interface PublicDataAdapter<T> {
 
 // VicEmergency adapter
 export class VicEmergencyAdapter implements PublicDataAdapter<GeoJSON.Feature> {
-	readonly source = 'vicemergency';
+	readonly source = 'vicEmergency';
 
 	async fetch(): Promise<GeoJSON.Feature[]> {
 		// Fetch and validate the GeoJSON FeatureCollection.
@@ -411,7 +450,7 @@ export interface BomObservation {
 }
 
 // BOM adapter
-export class BomAdapter implements PublicDataAdapter<BomObservation> {
+export class BomObservationAdapter implements PublicDataAdapter<BomObservation> {
 	readonly source = 'bom';
 
 	async fetch(): Promise<BomObservation[]> {
@@ -422,6 +461,52 @@ export class BomAdapter implements PublicDataAdapter<BomObservation> {
 	normalise(record: BomObservation): NormalisedEvent {
 		// Convert station coordinates to a GeoJSON Point
 		// and map weather measurements into the common schema.
+		throw new Error('Not implemented');
+	}
+}
+
+export interface BomWarningProduct {
+	identifier: string;
+	publishedAt: string;
+	expiresAt?: string;
+	title: string;
+	severity?: string;
+	area?: string;
+}
+
+export class BomWarningAdapter implements PublicDataAdapter<BomWarningProduct> {
+	readonly source = 'bom';
+
+	async fetch(): Promise<BomWarningProduct[]> {
+		// Fetch configured BOM XML warning products.
+		return [];
+	}
+
+	normalise(record: BomWarningProduct): NormalisedEvent {
+		// Map BOM warning metadata into the common schema.
+		throw new Error('Not implemented');
+	}
+}
+
+export interface BomWarningProduct {
+	identifier: string;
+	publishedAt: string;
+	expiresAt?: string;
+	title: string;
+	severity?: string;
+	area?: string;
+}
+
+export class BomWarningAdapter implements PublicDataAdapter<BomWarningProduct> {
+	readonly source = 'bom';
+
+	async fetch(): Promise<BomWarningProduct[]> {
+		// Fetch configured BOM XML warning products.
+		return [];
+	}
+
+	normalise(record: BomWarningProduct): NormalisedEvent {
+		// Map BOM warning metadata into the common schema.
 		throw new Error('Not implemented');
 	}
 }
@@ -477,7 +562,9 @@ Freshness check
 Weather evidence
 ```
 
-The exact maximum station distance and freshness threshold should be agreed during correlator design.
+For BOM observations, the correlator selects the nearest suitable weather station and checks that the observation is sufficiently recent.
+
+BOM warnings provide additional warning context for named affected areas. Where a warning product does not provide usable geometry, it should not be used for direct point-in-polygon matching. VicEmergency remains the primary source for affected-area polygon correlation.
 
 ## Feed Failure and Fallback Behaviour
 
@@ -513,9 +600,25 @@ A missing feed may reduce confidence, but should not prevent the correlator from
 For the initial prototype:
 
 1. Use **VicEmergency GeoJSON** as the primary emergency-event source because it provides structured warning information and affected-area geometry.
-2. Use **BOM weather observations JSON** as the weather-context source because it provides station coordinates and measured temperature/wind data.
-3. Normalise both sources into `NormalisedEvent`.
-4. Preserve VicEmergency geometry for point-in-polygon correlation.
-5. Associate BOM observations with devices using nearest-station and freshness checks.
-6. Publish normalised events to Redis Streams.
-7. Confirm the final feed choice and correlation thresholds with the team/client.
+2. Use **BOM weather observations JSON** for measured weather conditions such as temperature and wind.
+3. Use **BOM structured XML warning products** for additional weather-warning context.
+4. Normalise all public-feed records into `NormalisedEvent`.
+5. Preserve VicEmergency geometry for point-in-polygon correlation.
+6. Associate BOM observations with devices using nearest-station and freshness checks.
+7. Publish normalised events to Redis Streams.
+
+## SOURCES
+
+1. Vic Emergency live GeoJSON feed.
+   https://emergency.vic.gov.au/public/events-geojson.json
+2. BOM Ballarat weather observations.
+   https://www.bom.gov.au/products/IDV60801/IDV60801.94852.shtml
+3. Ballarat observation JSON product.
+   https://www.bom.gov.au/fwo/IDV60801/IDV60801.94852.json
+4. BOM weather data services documentation.
+   https://www.bom.gov.au/catalogue/data-feeds.shtml
+5. BOM warning products user guide
+   https://www.bom.gov.au/catalogue/Bureau_of_Meteorology_warning_products_user_guide.pdf
+6. BOM warning product: `IDV36810.xml`
+   FTP host: `ftp.bom.gov.au`  
+   Path: `/anon/gen/fwo/`
