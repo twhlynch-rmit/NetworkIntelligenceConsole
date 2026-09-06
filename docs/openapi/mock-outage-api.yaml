@@ -37,6 +37,12 @@ paths:
       description: Retrieve the outage status for a specific suburb and state.
       tags: [Outages]
       parameters:
+        - name: Correlation-Id
+          in: header
+          required: true
+          description: Unique Correlation ID for each transaction
+          schema:
+            type: string
         - name: suburb
           in: query
           required: true
