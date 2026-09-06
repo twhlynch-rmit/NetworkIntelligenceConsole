@@ -1,4 +1,6 @@
-# Tech Stack Summary
+# Project Architecture
+
+## Tech Stack Summary
 
 Monorepo with 6 backend microservices, a React frontend,
 and Redis Streams as the internal message bus.
@@ -23,7 +25,7 @@ In production containers the dashboard is served as static files by nginx
 (see `web/Dockerfile`, `web/nginx.conf`). Locally `pnpm dev` runs the Vite dev
 server on port 3000 instead.
 
-## Services & Ports
+### Services & Ports
 
 | Service             | Package                    | Port | Role                                           |
 | ------------------- | -------------------------- | ---- | ---------------------------------------------- |
@@ -36,9 +38,9 @@ server on port 3000 instead.
 
 Infrastructure: PostgreSQL `5432`, Redis `6379`, web `3000`.
 
-All HTTP services expose `GET /api/v1/health`.
+All HTTP services expose `GET /<service-name>/v0/health-check`.
 
-# Architecture Diagram
+## Architecture Diagram
 
 ```mermaid
 graph TB

@@ -1,0 +1,81 @@
+openapi: 3.2.0
+info:
+  title: Root Cause Correlator
+  description: |
+    Subscribes to `device-events` (DeviceEvent schema, see fleet-simulator.yaml) and `public-events` (PublicEvent schema, see public-data-adapter.yaml)
+    Redis Streams plus outage data and combines every input into a likely cause verdict with a confidence score and a recommended action.
+    Includes MSISDN, last-known GPS, suburb/postcode so the verdict is defensible.
+    Writes verdicts to the results service (Verdict schema, see results-api.yaml).
+    HTTP surface is limited to health and an on-demand recompute trigger.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3004
+    description: Local development
+
+security: []
+tags:
+  - name: Correlation
+    description: Root cause correlation and verdict computation
+  - name: System
+    description: Health checks and service status
+
+paths:
+  /correlator/v0/health-check:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /correlator/v0/recompute/{deviceId}:
+    post:
+      summary: Recompute a device verdict
+      description: Re-runs the correlation logic for a single device from current evidence.
+      tags: [Correlation]
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Recompute accepted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    HealthCheckResponse:
+      type: object
+      required:
+        - status
+        - service
+      properties:
+        status:
+          type: string
+          description: Service health status
+          example: ok
+        service:
+          type: string
+          description: Name of the service
+          example: correlator
+
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error message
+                example: Device not found

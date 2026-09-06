@@ -1,0 +1,339 @@
+openapi: 3.2.0
+info:
+  title: Device Fleet Simulator
+  description: |
+    Simulates 1000 SafeCall duress pendants across metropolitan Melbourne and regional Victoria.
+    Emits device state changes (heartbeat, movement, battery, signal loss) at a configurable rate.
+    Can replay scripted scenarios on demand.
+    Each pendant carries an MSISDN and a last-known GPS position so a silent device can trigger the mock Loss of Connectivity webhook and give the correlator a location to work from.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3002
+    description: Local development
+
+security: []
+tags:
+  - name: Devices
+    description: Simulated SafeCall duress pendant fleet
+  - name: Scenarios
+    description: Demo scenario scripting and replay
+  - name: System
+    description: Health checks, service status, and WebSocket events
+
+paths:
+  /fleet-simulator/v0/health-check:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /fleet-simulator/v0/devices:
+    get:
+      summary: List simulated devices
+      tags: [Devices]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/DeviceStatus'
+        - name: region
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [metro, regional]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Page of simulated devices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  devices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Device'
+                  total:
+                    type: integer
+
+  /fleet-simulator/v0/devices/{deviceId}:
+    get:
+      summary: Get a device
+      tags: [Devices]
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /fleet-simulator/v0/devices/{deviceId}/dropout:
+    post:
+      summary: Force a device dropout
+      description: Make a device broadcast a loss-of-connectivity event.
+      tags: [Devices]
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Dropout broadcast accepted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /fleet-simulator/v0/scenarios:
+    get:
+      summary: List scenario scripts
+      tags: [Scenarios]
+      responses:
+        '200':
+          description: Available scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scenario'
+
+  /fleet-simulator/v0/scenarios/{name}/run:
+    post:
+      summary: Run a scenario
+      description: Replays a scripted scenario on demand.
+      tags: [Scenarios]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ScenarioName'
+      responses:
+        '202':
+          description: Scenario run started
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /ws:
+    get:
+      summary: WebSocket - live device events
+      description: |
+        Streams device state changes via WebSocket.
+        Connect to `ws://localhost:3002/ws` for server-push messages.
+        Messages are `DeviceEvent` objects (heartbeat, movement, battery, signal loss).
+        Uses WebSocket protocol for low latency streaming of fleet telemetry.
+      tags: [System]
+      responses:
+        '101':
+          description: WebSocket upgrade accepted
+
+components:
+  schemas:
+    DeviceStatus:
+      type: string
+      description: Current connectivity status of the device
+      enum:
+        - ONLINE
+        - MOVING
+        - LOW_BATTERY
+        - SILENT
+        - OFFLINE
+
+    DeviceEvent:
+      type: object
+      description: |
+        Message shape published to the `device-events` Redis Stream on every state change.
+        The correlator consumes this to build verdicts.
+      required:
+        - deviceId
+        - msisdn
+        - status
+        - lastKnownLocation
+        - lastSeenAt
+        - eventType
+        - timestamp
+      properties:
+        deviceId:
+          type: string
+          description: Unique identifier for the simulated device
+          example: SC-P-4821
+        msisdn:
+          type: string
+          description: AU mobile e.164 MSISDN
+          example: '61412345678'
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+        lastKnownLocation:
+          $ref: '#/components/schemas/Location'
+        lastSeenAt:
+          type: string
+          format: date-time
+          description: Timestamp of last received heartbeat
+          example: '2026-08-30T16:12:00+10:00'
+        assignedTo:
+          type: string
+          description: Person or role assigned to this device
+          example: Nurse - Ballarat South
+        eventType:
+          type: string
+          description: Type of state change that triggered this event
+          enum:
+            - heartbeat
+            - movement
+            - battery
+            - signal-loss
+            - status-change
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when this event was generated
+          example: '2026-08-30T16:12:00+10:00'
+
+    Location:
+      type: object
+      required:
+        - lat
+        - lon
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude coordinate
+          example: -37.8136
+        lon:
+          type: number
+          format: double
+          description: Longitude coordinate
+          example: 144.9631
+        suburb:
+          type: string
+          description: Suburb or town name
+          example: Ballarat
+        postcode:
+          type: string
+          description: Four-digit Australian postcode
+          example: '3350'
+        source:
+          type: string
+          description: Origin of the location data
+          example: SafeCall device telemetry
+
+    Device:
+      type: object
+      required:
+        - deviceId
+        - msisdn
+        - status
+        - lastKnownLocation
+        - lastSeenAt
+      properties:
+        deviceId:
+          type: string
+          description: Unique identifier for the simulated device
+          example: SC-P-4821
+        msisdn:
+          type: string
+          description: AU mobile e.164 MSISDN
+          example: '61412345678'
+        status:
+          $ref: '#/components/schemas/DeviceStatus'
+        lastKnownLocation:
+          $ref: '#/components/schemas/Location'
+        battery:
+          type: integer
+          description: Battery percentage
+          example: 85
+        signal:
+          type: integer
+          description: Signal strength (dBm)
+          example: -75
+        lastSeenAt:
+          type: string
+          format: date-time
+          description: Timestamp of last received heartbeat
+          example: '2026-08-30T16:12:00+10:00'
+        assignedTo:
+          type: string
+          description: Person or role assigned to this device
+          example: Nurse - Ballarat South
+
+    Scenario:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          $ref: '#/components/schemas/ScenarioName'
+        description:
+          type: string
+          description: Human-readable description of the scenario
+          example: Hero scenario - nurse pendant goes silent during bushfire
+
+    ScenarioName:
+      type: string
+      description: Predefined scenario identifier
+      enum:
+        - hero-scenario
+        - mass-outage
+        - battery-drain
+        - normal-ops
+        - clean
+
+    HealthCheckResponse:
+      type: object
+      required:
+        - status
+        - service
+      properties:
+        status:
+          type: string
+          description: Service health status
+          example: ok
+        service:
+          type: string
+          description: Name of the service
+          example: fleet-simulator
+
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error message
+                example: Device not found

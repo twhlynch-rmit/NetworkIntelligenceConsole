@@ -1,0 +1,542 @@
+openapi: 3.2.0
+info:
+  title: Mock Loss of Connectivity API
+  description: |
+    Mock of the real Telstra IoT Loss of Connectivity API.
+    A subscription + webhook service, not a status endpoint.
+    A customer registers MSISDNs against a callback URL.
+    Telstra then POSTs an event to that URL when a subscribed device loses connectivity.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3006
+    description: Local development
+
+security: []
+tags:
+  - name: Loss of Connectivity
+    description: Telstra IoT Loss of Connectivity subscription and webhook management
+  - name: System
+    description: Health checks and service status
+
+paths:
+  /health-check:
+    get:
+      summary: Health check endpoint
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /loss-of-connectivity/v0/subscriptions:
+    post:
+      summary: Subscribe to Loss of Connectivity events
+      description: Endpoint to subscribe to Loss of Connectivity events for specified MSISDNs.
+      tags: [Loss of Connectivity]
+      parameters:
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionsRequest'
+      responses:
+        '201':
+          description: All subscriptions created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionsResponse'
+        '207':
+          description: Partial success - some subscriptions failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    get:
+      summary: List subscriptions owned by the authenticated caller
+      description: Returns a cursor-paged list of Loss of Connectivity subscriptions owned by the authenticated caller.
+      tags: [Loss of Connectivity]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Maximum number of subscriptions to return
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cursor returned by the previous page response
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Owned subscriptions returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSubscriptionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /loss-of-connectivity/v0/subscriptions/{subscriptionId}:
+    get:
+      summary: Get subscription details by subscriptionId
+      description: Retrieve the details of a specific subscription using its subscriptionId.
+      tags: [Loss of Connectivity]
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSubscriptionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete a subscription by subscriptionId
+      description: Deletes the subscription resource identified by the given subscriptionId.
+      tags: [Loss of Connectivity]
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: correlation-id
+          in: header
+          required: true
+          description: Unique Correlation ID (UUID v4) for end-to-end request tracing
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Subscription deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /loss-of-connectivity/v0/events:
+    post:
+      summary: Receive Loss of Connectivity event notifications
+      description: Endpoint to receive asynchronous Loss of Connectivity event notifications for subscribed devices.
+      tags: [Loss of Connectivity]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LossOfConnectivityEvent'
+      responses:
+        '202':
+          description: Event accepted for asynchronous processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAcceptedResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message-content
+      properties:
+        code:
+          type: integer
+          enum: [400, 401, 403, 404, 405, 500, 502]
+          minimum: 0
+          maximum: 1000
+        message-content:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Bad request
+        errors:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+              minLength: 1
+              maxLength: 100
+
+    Msisdn:
+      type: string
+      pattern: '^(614|619)[0-9]+$'
+      description: AU mobile e.164 MSISDN, starting 614 or 619
+      example: '61412345678'
+
+    SubscriptionsRequest:
+      type: object
+      required:
+        - monitoringType
+        - subscriptions
+      properties:
+        monitoringType:
+          type: string
+          description: The event you want to subscribe to. This will be LOSS_OF_CONNECTIVITY
+          example: LOSS_OF_CONNECTIVITY
+        subscriptions:
+          type: array
+          minItems: 1
+          description: List of subscription objects (at least one required). Duplicate msisdn values are rejected across the full payload.
+          items:
+            type: object
+            required:
+              - msisdn
+              - notificationDestination
+            properties:
+              msisdn:
+                type: array
+                minItems: 1
+                uniqueItems: true
+                description: The MSISDNs of the devices you want to subscribe (at least one required). Each value must match AU mobile e.164 format and start with 614 or 619.
+                items:
+                  $ref: '#/components/schemas/Msisdn'
+                example:
+                  - '61412345678'
+                  - '61912345679'
+              notificationDestination:
+                type: string
+                format: uri
+                description: Callback URL for event notifications
+                example: https://www.test.com/
+
+    SubscriptionResult:
+      type: object
+      required:
+        - subscriptionId
+        - msisdn
+        - status
+        - notificationDestination
+      properties:
+        subscriptionId:
+          type: string
+          description: Identifier of the subscription resource
+          example: a1691659-808b-48b4-bc59-69816a4b3cfd
+        msisdn:
+          type: string
+          description: MSISDN successfully subscribed
+          example: '61412345678'
+        status:
+          type: integer
+          description: Status code (201 for success)
+          example: 201
+        notificationDestination:
+          type: string
+          format: uri
+          description: Callback URL for event notifications
+          example: https://test.com/
+
+    SubscriptionsResponse:
+      type: object
+      required:
+        - correlation-id
+        - status
+        - timeStamp
+        - message
+        - subscriptions
+      properties:
+        correlation-id:
+          type: string
+          description: Unique correlation ID for the request
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        status:
+          type: integer
+          description: HTTP status code for the response
+          example: 207
+        timeStamp:
+          type: integer
+          description: Epoch timestamp when the response was generated
+          example: 1778573441364
+        message:
+          type: string
+          description: Indicates whether all subscriptions were successful or partial_success
+          example: successful
+        subscriptions:
+          type: array
+          description: List of subscription results for each device
+          items:
+            $ref: '#/components/schemas/SubscriptionResult'
+        errors:
+          type: array
+          description: Optional array of errors for failed subscriptions
+          items:
+            type: object
+            required:
+              - type
+              - message-content
+              - status
+            properties:
+              type:
+                type: string
+                description: Error type
+                example: AUTHORIZATION_ERROR
+              message-content:
+                type: string
+                description: Error message
+                example: You do not have access to this device - 61412345678
+              status:
+                type: integer
+                description: Status code for this error (e.g., 403, 409)
+                example: 403
+              msisdn:
+                $ref: '#/components/schemas/Msisdn'
+              notificationDestination:
+                type: string
+                description: Callback URL for event notifications
+                example: https://www.test.com/
+              reason:
+                type: string
+                description: Optional downstream authorization/failure reason payload
+                example: '{"errorList":[{"code":"403 FORBIDDEN","issue":"Access denied for this device"}]}'
+
+    GetSubscriptionsResponse:
+      type: object
+      required:
+        - subscriptions
+      properties:
+        subscriptions:
+          type: array
+          items:
+            type: object
+            properties:
+              subscriptionId:
+                type: string
+                example: a1691659-808b-48b4-bc59-69816a4b3cfd
+              msisdn:
+                type: string
+                example: '61412345678'
+              notificationDestination:
+                type: string
+                example: https://callback.test
+        nextCursor:
+          type: string
+          example: b1691659-808b-48b4-bc59-69816a4b3cfd
+        limit:
+          type: integer
+          example: 100
+
+    GetSubscriptionResponse:
+      type: object
+      required:
+        - subscriptionId
+        - msisdn
+        - notificationDestination
+      properties:
+        subscriptionId:
+          type: string
+          description: Identifier of the subscription resource
+          example: a1691659-808b-48b4-bc59-69816a4b3cfd
+        msisdn:
+          type: string
+          description: The subscribed device MSISDN
+          example: '61412345678'
+        notificationDestination:
+          type: string
+          description: Callback URL for event notifications
+          example: https://test.com/
+
+    DeleteSubscriptionResponse:
+      type: object
+      properties:
+        correlationId:
+          type: string
+          description: Unique correlation ID for the request
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+
+    LossOfConnectivityEvent:
+      type: object
+      required:
+        - subscriptionId
+        - monitoringEventReports
+      properties:
+        subscriptionId:
+          type: string
+          description: Identifier of the subscription resource
+          example: ffffffff-ffff-ffff-ffff-ffffffffffff
+        monitoringEventReports:
+          type: array
+          description: List of monitoring event reports for the subscription
+          items:
+            type: object
+            required:
+              - monitoringType
+              - msisdn
+              - eventTime
+            properties:
+              monitoringType:
+                type: string
+                enum:
+                  - LOSS_OF_CONNECTIVITY
+                description: Callback event type
+                example: LOSS_OF_CONNECTIVITY
+              msisdn:
+                type: string
+                description: The MSISDN of the device for which the event is reported
+                example: '61412345678'
+              lossOfConnectReason:
+                type: integer
+                description: |
+                  Reason for loss of connectivity. Values:
+                    0 - UE_DETACHED_MME
+                    1 - UE_DETACHED_SGSN
+                    2 - MAX_DETECTION_TIME_EXPIRED_MME
+                    3 - MAX_DETECTION_TIME_EXPIRED_SGSN
+                    4 - UE_PURGED_MME
+                    5 - UE_PURGED_SGSN
+                    6 - DEREGISTERED (AMF)
+                    7 - MAX_DETECTION_TIME_EXPIRED (AMF)
+                    8 - PURGED (AMF)
+                example: 0
+              eventTime:
+                type: string
+                format: date-time
+                description: Time when the event was detected
+                example: '2028-01-31T00:15:00+08:00'
+      example:
+        subscriptionId: ffffffff-ffff-ffff-ffff-ffffffffffff
+        monitoringEventReports:
+          - monitoringType: LOSS_OF_CONNECTIVITY
+            msisdn: '61412345678'
+            lossOfConnectReason: 0
+            eventTime: '2028-01-31T00:15:00+08:00'
+
+    HealthCheckResponse:
+      type: object
+      required:
+        - statusCode
+        - service
+      properties:
+        statusCode:
+          type: integer
+          example: 200
+        service:
+          type: string
+          example: mock-loc-api
+
+    EventAcceptedResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 202
+        timeStamp:
+          type: integer
+
+  responses:
+    BadRequest:
+      description: Invalid request - validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Unexpected internal error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Downstream dependency unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    MethodNotAllowed:
+      description: Method not allowed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -13,8 +13,8 @@ export function createApp() {
 		res.json({ status: 'ok', service: SERVICE_NAME });
 	};
 
-	app.get('/api/v1/health', health);
-	app.get('/health', health);
+	app.get('/fleet-simulator/v0/health-check', health);
+	app.get('/health-check', health);
 
 	return app;
 }

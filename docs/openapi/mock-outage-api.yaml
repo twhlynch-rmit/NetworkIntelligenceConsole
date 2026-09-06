@@ -1,0 +1,355 @@
+openapi: 3.2.0
+info:
+  title: Mock Outage API
+  description: |
+    Mock of the real Telstra IoT Outage API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3001
+    description: Local development
+
+security: []
+tags:
+  - name: Outages
+    description: Telstra IoT outage status queries
+  - name: Scenarios
+    description: Demo-only scenario management controls
+  - name: System
+    description: Health checks and service status
+
+paths:
+  /outage/v0/health-check:
+    get:
+      summary: Health check endpoint
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+
+  /outage/v0/status:
+    get:
+      summary: Get outage status by Suburb
+      description: Retrieve the outage status for a specific suburb and state.
+      tags: [Outages]
+      parameters:
+        - name: Correlation-Id
+          in: header
+          required: true
+          description: Unique Correlation ID for each transaction
+          schema:
+            type: string
+        - name: suburb
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The suburb or town
+          example: Melbourne
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - QLD
+              - NSW
+              - ACT
+              - VIC
+              - TAS
+              - SA
+              - WA
+              - NT
+              - NAT # TODO: NAT or INT & OT?
+          description: The state abbreviation of the location
+          example: VIC
+        - name: postcode
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The four-digit postcode of the location
+          example: '3000'
+      responses:
+        '200':
+          description: Outage status for the queried suburb
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutageStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableErrorResponse'
+
+  /outage/v0/scenarios:
+    get:
+      summary: List outage scenarios
+      description: Demo-only control surface. Lists the toggleable hard-coded scenarios.
+      tags: [Scenarios]
+      responses:
+        '200':
+          description: Scenarios with their active flag
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scenario'
+
+  /outage/v0/scenarios/{name}/activate:
+    post:
+      summary: Toggle an outage scenario
+      description: Demo-only control surface. Turns a scenario on or off for reproducible demos.
+      tags: [Scenarios]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ScenarioName'
+      responses:
+        '200':
+          description: Scenario toggle result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    OutageStatusItem:
+      type: object
+      required:
+        - state
+        - suburb
+        - postcode
+        - start_timestamp
+        - end_timestamp
+        - root_cause
+        - duration
+        - description
+        - is_planned
+        - technology
+      properties:
+        state:
+          type: string
+          description: The state abbreviation of the location
+          example: VIC
+        suburb:
+          type: string
+          description: The suburb or town of the location
+          example: MELBOURNE
+        postcode:
+          type: string
+          description: The postcode of the location
+          example: '3000'
+        start_timestamp:
+          type: string
+          description: Start time of the outage (with timezone)
+          example: '2025-09-29 21:43:00 Australia/Melbourne'
+        end_timestamp:
+          type: ['string', 'null']
+          description: End time of the outage (with timezone), or null if ongoing
+          example: '2025-09-29 21:44:00 Australia/Melbourne'
+        root_cause:
+          type: string
+          description: Root cause of the outage
+          example: Telstra Network (Hardware/Software/Config)
+        duration:
+          type: integer
+          description: Duration of the outage in seconds
+          example: 60
+        description:
+          type: string
+          description: Description of the outage
+          example: Mobile services are now available.
+        is_planned:
+          type: boolean
+          description: Indicates if the outage is planned
+          example: false
+        technology:
+          type: string
+          description: Technology affected by the outage
+          example: 4G
+
+    OutageStatusResponse:
+      type: object
+      required:
+        - correlation-id
+        - status
+        - timestamp
+        - past
+        - near_future
+        - far_future
+        - current
+      properties:
+        correlation-id:
+          type: string
+          description: Unique correlation ID for the request
+          example: abc123-correlation-id
+        status:
+          type: integer
+          description: HTTP status code
+          example: 200
+        timestamp:
+          type: integer
+          description: Epoch timestamp when the response was generated
+          example: 1778644931047
+        past:
+          type: array
+          description: Past outages for the suburb
+          items:
+            $ref: '#/components/schemas/OutageStatusItem'
+        near_future:
+          type: array
+          description: Upcoming outages for the suburb in the next 24 hours
+          items:
+            $ref: '#/components/schemas/OutageStatusItem'
+        far_future:
+          type: array
+          description: Scheduled outages far in the future
+          items:
+            $ref: '#/components/schemas/OutageStatusItem'
+        current:
+          type: array
+          description: Current outages for the suburb
+          items:
+            $ref: '#/components/schemas/OutageStatusItem'
+
+    Scenario:
+      type: object
+      required:
+        - name
+        - active
+      properties:
+        name:
+          $ref: '#/components/schemas/ScenarioName'
+        active:
+          type: boolean
+        outageId:
+          type: string
+
+    ScenarioName:
+      type: string
+      enum:
+        - regional-maintenance
+        - metro-outage
+        - major-event
+        - storm-correlated
+        - clean
+
+    HealthCheckResponse:
+      type: object
+      required:
+        - statusCode
+        - service
+      properties:
+        statusCode:
+          type: integer
+          example: 200
+        service:
+          type: string
+          example: mock-outage-api
+
+    ErrorItem:
+      type: object
+      required:
+        - code
+        - issue
+        - suggested_action
+      properties:
+        code:
+          type: string
+          example: FIELD_MISSING
+        issue:
+          type: string
+          example: suburb
+        fieldName:
+          type: string
+          example: suburb
+        location:
+          type: string
+          example: query
+        value:
+          type: ['string', 'null']
+          description: The offending value when available.
+        suggested_action:
+          type: string
+          example: Please provide the suburb.
+        link:
+          type: ['string', 'null']
+
+    ErrorEnvelope:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+
+  responses:
+    BadRequestErrorResponse:
+      description: Invalid request - validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          examples:
+            validationFailure:
+              value:
+                errors:
+                  - code: FIELD_MISSING
+                    issue: suburb
+                    fieldName: suburb
+                    location: query
+                    suggested_action: Please provide the suburb.
+                  - code: FIELD_MISSING
+                    issue: correlation-id
+                    fieldName: correlation-id
+                    location: header
+                    suggested_action: Please provide the correlation-id.
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InternalServerErrorResponse:
+      description: An unexpected internal error occurred.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          examples:
+            unexpectedFailure:
+              value:
+                errors:
+                  - code: UNKNOWN
+                    issue: Unknown
+                    location: service
+                    suggested_action: Please try again.
+    ServiceUnavailableErrorResponse:
+      description: A downstream dependency is unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          examples:
+            dependencyFailure:
+              value:
+                errors:
+                  - code: SERVICE_UNAVAILABLE
+                    issue: The server is temporarily unable to handle the request.
+                    location: service
+                    suggested_action: Please try again later.
