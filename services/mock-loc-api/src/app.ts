@@ -13,7 +13,6 @@ export function createApp() {
 		res.json({ status: 'ok', service: SERVICE_NAME });
 	};
 
-	app.get('/loss-of-connectivity/v0/health-check', health);
 	app.get('/health-check', health);
 
 	return app;

@@ -20,7 +20,7 @@ tags:
     description: Health checks and service status
 
 paths:
-  /loss-of-connectivity/v0/health-check:
+  /health-check:
     get:
       summary: Health check endpoint
       tags: [System]
