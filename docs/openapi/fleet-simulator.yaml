@@ -221,6 +221,10 @@ components:
           format: date-time
           description: Timestamp of last received heartbeat
           example: '2026-08-30T16:12:00+10:00'
+        assignedTo:
+          type: string
+          description: Person or role assigned to this device
+          example: Nurse - Ballarat South
 
     Scenario:
       type: object
