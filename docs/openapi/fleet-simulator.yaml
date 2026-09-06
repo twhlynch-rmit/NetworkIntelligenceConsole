@@ -236,6 +236,18 @@ components:
           format: double
           description: Longitude coordinate
           example: 144.9631
+        suburb:
+          type: string
+          description: Suburb or town name
+          example: Ballarat
+        postcode:
+          type: string
+          description: Four-digit Australian postcode
+          example: '3350'
+        source:
+          type: string
+          description: Origin of the location data
+          example: SafeCall device telemetry
 
     Device:
       type: object
