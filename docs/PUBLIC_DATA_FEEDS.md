@@ -487,29 +487,6 @@ export class BomWarningAdapter implements PublicDataAdapter<BomWarningProduct> {
 		throw new Error('Not implemented');
 	}
 }
-
-export interface BomWarningProduct {
-	identifier: string;
-	publishedAt: string;
-	expiresAt?: string;
-	title: string;
-	severity?: string;
-	area?: string;
-}
-
-export class BomWarningAdapter implements PublicDataAdapter<BomWarningProduct> {
-	readonly source = 'bom';
-
-	async fetch(): Promise<BomWarningProduct[]> {
-		// Fetch configured BOM XML warning products.
-		return [];
-	}
-
-	normalise(record: BomWarningProduct): NormalisedEvent {
-		// Map BOM warning metadata into the common schema.
-		throw new Error('Not implemented');
-	}
-}
 ```
 
 The intended flow is:
