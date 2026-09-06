@@ -195,6 +195,10 @@ components:
           type: string
           description: Suburb or town name
           example: Ballarat
+        state:
+          type: string
+          description: Australian state or territory abbreviation
+          example: VIC
         postcode:
           type: string
           description: Four-digit Australian postcode
