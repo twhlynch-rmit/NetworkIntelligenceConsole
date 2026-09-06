@@ -398,6 +398,10 @@ components:
           example: bushfire
         location:
           $ref: '#/components/schemas/Location'
+        area:
+          type: object
+          description: GeoJSON geometry of the event area (Polygon or MultiPolygon)
+          additionalProperties: true
         description:
           type: string
           description: Human-readable description

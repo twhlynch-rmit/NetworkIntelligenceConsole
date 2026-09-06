@@ -162,6 +162,10 @@ components:
           example: Bushfire warning for Ballarat region
         location:
           $ref: '#/components/schemas/Location'
+        area:
+          type: object
+          description: GeoJSON geometry of the event area (Polygon or MultiPolygon from VicEmergency)
+          additionalProperties: true
         publishedAt:
           type: string
           format: date-time
