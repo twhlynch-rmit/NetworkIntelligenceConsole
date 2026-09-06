@@ -279,6 +279,34 @@ export interface NormalisedEvent {
 
 `measurements` stores structured weather values. `raw` preserves the original source record for debugging and traceability.
 
+## NormalisedEvent to PublicEvent Mapping
+
+The `NormalisedEvent` TypeScript interface is the adapter layer's internal
+shape. The `PublicEvent` schema in `public-data-adapter.yaml` is the contract
+published to the `public-events` Redis Stream.
+
+The adapter must transform `NormalisedEvent` into `PublicEvent` before publishing:
+
+| NormalisedEvent field | PublicEvent field | Notes                                                        |
+| --------------------- | ----------------- | ------------------------------------------------------------ |
+| `id`                  | `eventId`         | Direct mapping                                               |
+| `source`              | `source`          | Direct mapping                                               |
+| `type`                | `eventType`       | Map CAP event type or `weather-observation`                  |
+| `severity`            | `severity`        | Direct mapping                                               |
+| `description`         | `description`     | Use `text` from VicEmergency or generate from measurements   |
+| `location.name`       | -                 | Not in PublicEvent; available in `raw`                       |
+| `location.geometry`   | `area`            | GeoJSON geometry (polygon or point)                          |
+| `location`            | `location`        | Point or compute centroid from geometry                      |
+| `publishedAt`         | `publishedAt`     | Direct mapping                                               |
+| `measurements`        | -                 | Not in PublicEvent; available in `raw` for correlator access |
+| `kind`                | -                 | Used internally; not in PublicEvent                          |
+| `status`              | -                 | Used internally; not in PublicEvent                          |
+| `raw`                 | -                 | Retained by adapter for debugging; not published to stream   |
+
+Fields not mapped to `PublicEvent` (such as `measurements` and `status`) are
+available in the adapter's internal processing and can be accessed by the
+correlator if it reads from the adapter directly rather than the Redis Stream.
+
 ## Representative Field Mapping
 
 | Normalised field       | VicEmergency GeoJSON                  | BOM Observations            | BOM Warnings                     |
