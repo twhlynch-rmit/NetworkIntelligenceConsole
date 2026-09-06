@@ -13,7 +13,7 @@ The assessment focuses on:
 
 ### 1. VicEmergency GeoJSON Feed
 
-**Purpose:**  
+**Purpose:**
 Provides current emergency warnings and incidents across Victoria, including fires, floods, storms, hazardous-material incidents and other emergency events.
 
 **Access method:**
@@ -23,18 +23,18 @@ Provides current emergency warnings and incidents across Victoria, including fir
 
 **Preferred prototype format:** GeoJSON
 
-**Refresh behaviour:**  
+**Refresh behaviour:**
 The project brief identifies the VicEmergency GeoJSON feed as updating approximately every 60 seconds.
 
-**Licence / access notes:**  
+**Licence / access notes:**
 The project brief identifies the VicEmergency GeoJSON feed as Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU). Appropriate attribution must be provided when using or displaying VicEmergency data.
 
-**Suitability:**  
+**Suitability:**
 High. The feed provides emergency information together with affected-area geometry, allowing the Root Cause Correlator to test whether a device's last-known GPS position overlaps an active warning area.
 
 ### 2. Bureau of Meteorology Weather Observations and Warnings
 
-**Purpose:**  
+**Purpose:**
 Provides measured weather observations and structured weather warnings that add environmental context to emergency and outage events.
 
 Relevant measurements include:
@@ -57,13 +57,13 @@ Relevant measurements include:
 
 For the prototype, the Ballarat weather observation product (`IDV60801`) was assessed because it provides station coordinates and the measurements required by the project's hero scenario.
 
-**Refresh behaviour:**  
+**Refresh behaviour:**
 Observation products contain timestamped measurements that update periodically. The adapter should use the observation timestamp when determining freshness.
 
-**Licence / access notes:**  
+**Licence / access notes:**
 The sampled BOM response includes Bureau of Meteorology copyright and disclaimer information. The project brief identifies BOM public-feed use as non-commercial.
 
-**Suitability:**  
+**Suitability:**
 High. The feed provides station location, temperature, wind and other measured weather data that can be correlated with a device's last-known location.
 
 ## VicEmergency Representative Payload
@@ -625,5 +625,5 @@ For the initial prototype:
 5. BOM warning products user guide
    https://www.bom.gov.au/catalogue/Bureau_of_Meteorology_warning_products_user_guide.pdf
 6. BOM warning product: `IDV36810.xml`
-   FTP host: `ftp.bom.gov.au`  
+   FTP host: `ftp.bom.gov.au`
    Path: `/anon/gen/fwo/`
