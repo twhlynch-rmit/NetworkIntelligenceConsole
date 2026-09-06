@@ -1,325 +1,377 @@
 # PUBLIC DATA FEED ASSESSMENT
 
-## OBJECTIVE
+## Objective
 
 Assess candidate Australian public data feeds for the Network Intelligence Console and propose a common event shape for ingestion through the Public Data Adapter.
 
-The initial assessment focuses on:
+The assessment focuses on:
 
-- Victorian emergency incident data
-- Bureau of Meteorology weather and warning data
+- VicEmergency warnings and incidents
+- Bureau of Meteorology weather observations
 
 ## Candidate Feeds
 
-### 1. VicEmergency / CFA Incident Feed
+### 1. VicEmergency GeoJSON Feed
 
 **Purpose:**  
-Provides current emergency incidents and planned burns across Victoria.
+Provides current emergency warnings and incidents across Victoria, including fires, floods, storms, hazardous-material incidents and other emergency events.
 
-**Access methods:**
+**Access method:**
 
-- JSON
-- XML
-- RSS 2.0
+- Public HTTP feed
+- GeoJSON
 
-**Developer endpoints:**
-
-- Incident JSON
-- Incident XML
-- Incident RSS
-
-**Preferred prototype format:** JSON
+**Preferred prototype format:** GeoJSON
 
 **Refresh behaviour:**  
-CFA states that its RSS feeds update every minute.
+The project brief identifies the VicEmergency GeoJSON feed as updating approximately every 60 seconds.
 
 **Licence / access notes:**  
-CFA's public RSS feeds are intended for personal, non-commercial use. Access to Victorian emergency data for third-party developers is managed by Emergency Management Victoria, so production use should be confirmed with the team/client before relying on the feed.
+The project brief identifies the VicEmergency GeoJSON feed as Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU). Appropriate attribution must be provided when using or displaying VicEmergency data.
 
 **Suitability:**  
-High. The feed directly represents emergency incidents and aligns closely with the event-correlation purpose of the Network Intelligence Console.
+High. The feed provides emergency information together with affected-area geometry, allowing the Root Cause Correlator to test whether a device's last-known GPS position overlaps an active warning area.
 
-### 2. Bureau of Meteorology
+### 2. Bureau of Meteorology Weather Observations
 
 **Purpose:**  
-Provides weather observations, forecasts and warnings that can be used to add environmental context to emergency and outage events.
+Provides measured weather observations that can add environmental context to emergency and outage events.
+
+Relevant measurements include:
+
+- air temperature
+- wind speed and direction
+- wind gust
+- rainfall
+- humidity
+- pressure
 
 **Access methods:**
 
 - Web data products
-- Anonymous FTP
-- RSS warning feeds
-- XML
 - JSON observation products
+- XML
+- FTP / data services where applicable
 
-**Preferred prototype format:** RSS, using the Victoria state-based weather warnings feed.
+**Preferred prototype format:** JSON weather observations.
+
+For the prototype, the Ballarat weather observation product (`IDV60801`) was assessed because it provides station coordinates and the measurements required by the project's hero scenario.
 
 **Refresh behaviour:**  
-Refresh frequency depends on the product. Warning feeds are updated as warnings are issued, while observational products update periodically.
+Observation products contain timestamped measurements that update periodically. The adapter should use the observation timestamp when determining freshness.
 
 **Licence / access notes:**  
-Many Bureau products are available through anonymous services, but the Bureau states that these products are not for commercial use and does not guarantee availability of the anonymous service. Registered services are available for users requiring service continuity.
+The sampled BOM response includes Bureau of Meteorology copyright and disclaimer information. The project brief identifies BOM public-feed use as non-commercial.
 
 **Suitability:**  
-High as a contextual source. Weather warnings and observations may help explain or correlate outages and emergency incidents caused by environmental events.
+High. The feed provides station location, temperature, wind and other measured weather data that can be correlated with a device's last-known location.
 
 ## VicEmergency Representative Payload
 
-A sampled VicEmergency JSON response has the following top-level structure:
+A sampled VicEmergency GeoJSON response has the following structure:
 
 ```json
 {
-	"results": [
-		{
-			"incidentNo": 291190,
-			"lastUpdateDateTime": "30/08/2026 09:05:00",
-			"originDateTime": "30/08/2026 09:05:00",
-			"incidentType": "GRASS",
-			"incidentLocation": "CORINELLA",
-			"incidentStatus": "Responding",
-			"incidentSize": "SMALL",
-			"name": "CORINELLA RD",
-			"territory": "CFA",
-			"resourceCount": 2,
-			"latitude": -38.42628962598518,
-			"longitude": 145.46301493469034,
-			"eventCode": "622",
-			"fireDistrict": "Central",
-			"municipality": "Bass Coast",
-			"category1": "Fire",
-			"category2": "Bushfire",
-			"feedType": "incident",
-			"agency": "CFA",
-			"originStatus": "RESPONDING",
-			"lastUpdatedDt": 1788044700000
-		}
-	]
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [147.1975, -36.75125]
+          },
+          {
+            "type": "Polygon",
+            "coordinates": [
+              ["... affected-area coordinates ..."]
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "feedType": "warning",
+        "cap": {
+          "category": "Met",
+          "event": "Riverine Flood",
+          "urgency": "Expected",
+          "severity": "Minor",
+          "certainty": "Unknown",
+          "responseType": "Monitor"
+        },
+        "sourceOrg": "EMV",
+        "sourceId": "43095",
+        "id": "43095",
+        "category1": "Advice",
+        "category2": "Met",
+        "status": "Minor",
+        "name": "Advice",
+        "action": "Threat Is Reduced",
+        "location": "Kiewa River to Mongans bridge",
+        "created": "2026-09-06T10:30:24+10:00",
+        "updated": "2026-09-06T10:30:25+10:00",
+        "text": "ADVICE - RIVERINE FLOOD - Threat Is Reduced..."
+      }
+    }
+  ]
 }
 ```
 
-The response is an object containing a `results` array. The adapter would iterate over this array and normalise each incident into the common event format.
+The response is a GeoJSON `FeatureCollection` containing one or more `Feature` objects.
 
-Fields such as `lastUpdatedDtStr`, `originDateTimeStr`, `catg1CssClass` and `incidentSizeFmt` appear to be presentation-oriented and should not be relied on as core normalised fields.
+Features may include a `GeometryCollection` with both point and polygon geometry. The polygon is particularly useful because it allows the correlator to test whether a device is inside an affected warning area.
+
+GeoJSON coordinates use longitude followed by latitude.
+
+Fields under `properties.cap`, such as `event`, `severity`, `urgency` and `certainty`, provide structured warning metadata for normalisation.
 
 ## BOM Representative Payload
 
-The selected Bureau of Meteorology source is the Victoria state-based weather warnings RSS feed.
+The selected BOM source is the Ballarat weather observations JSON product (`IDV60801`).
 
-A sampled response has the following top-level structure:
+A sampled response has the following structure:
 
-```xml
-<rss version="2.0">
-  <channel>
-    <title>Weather Warnings for Victoria. Issued by the Australian Bureau of Meteorology</title>
-    <pubDate>Sun, 30 Aug 2026 00:01:05 GMT</pubDate>
-    <lastBuildDate>Sun, 30 Aug 2026 00:01:05 GMT</lastBuildDate>
-    <ttl>10</ttl>
-
-    <item>
-      <title>28/12:23 EST Minor Flood Warning for the Kiewa River</title>
-      <link>http://reg.bom.gov.au/vic/warnings/flood/kiewariver.shtml</link>
-      <pubDate>Fri, 28 Aug 2026 02:23:37 GMT</pubDate>
-      <guid isPermaLink="false">http://reg.bom.gov.au/vic/warnings/flood/kiewariver.shtml</guid>
-    </item>
-  </channel>
-</rss>
+```json
+{
+  "observations": {
+    "notice": [
+      {
+        "copyright": "Copyright Commonwealth of Australia 2026, Bureau of Meteorology."
+      }
+    ],
+    "header": [
+      {
+        "ID": "IDV60801",
+        "main_ID": "IDV60800",
+        "name": "Ballarat",
+        "product_name": "Weather Observations",
+        "state": "Victoria"
+      }
+    ],
+    "data": [
+      {
+        "wmo": 94852,
+        "name": "Ballarat",
+        "history_product": "IDV60801",
+        "local_date_time_full": "20260906193000",
+        "aifstime_utc": "20260906093000",
+        "lat": -37.5,
+        "lon": 143.8,
+        "apparent_t": 8.6,
+        "gust_kmh": 9,
+        "air_temp": 10.4,
+        "dewpt": 8.0,
+        "press_msl": 1023.7,
+        "rain_trace": "0.0",
+        "rel_hum": 85,
+        "wind_dir": "SW",
+        "wind_spd_kmh": 7
+      }
+    ]
+  }
+}
 ```
 
-The response is an RSS 2.0 document containing a `channel` element with one or more `item` elements. The adapter would iterate over each `item` and normalise it into the common event format.
+The response contains an `observations` object with `notice`, `header` and `data` sections.
 
-The feed-level `ttl` value is currently `10`, indicating a suggested refresh interval of 10 minutes for RSS clients.
+The `header` identifies the observation product and location, while `data` contains timestamped station observations.
 
-Unlike the VicEmergency JSON feed, the BOM RSS warning item is relatively small and does not directly expose coordinates, a dedicated status field, a dedicated severity field, or an expiry timestamp.
+Each observation includes station coordinates and measured values such as temperature, wind speed, direction and gust.
 
 ## Proposed Normalised Event Shape
 
-Different public feeds use different field names and structures. The Public Data Adapter should convert source-specific records into a common event model before publishing them to Redis Streams.
+Different public feeds use different structures. The Public Data Adapter should convert source-specific records into a common model before publishing them to Redis Streams.
 
 ```ts
+type NormalisedSource = 'vicemergency' | 'bom';
+
+type NormalisedKind =
+  | 'warning'
+  | 'incident'
+  | 'observation';
+
 export interface NormalisedEvent {
-	id: string;
-	source: 'vicemergency' | 'bom';
+  id: string;
+  source: NormalisedSource;
+  kind: NormalisedKind;
 
-	type: string;
-	title: string;
-	description?: string;
+  type: string;
+  title: string;
+  description?: string;
 
-	severity?: 'info' | 'minor' | 'moderate' | 'severe' | 'extreme';
-	status?: 'active' | 'updated' | 'resolved' | 'unknown';
+  severity?: string;
+  status?: 'active' | 'updated' | 'resolved' | 'unknown';
 
-	location?: {
-		latitude?: number;
-		longitude?: number;
-		name?: string;
-	};
+  location?: {
+    name?: string;
+    geometry?: GeoJSON.Geometry;
+  };
 
-	issuedAt?: string;
-	updatedAt?: string;
-	expiresAt?: string;
+  observedAt?: string;
+  issuedAt?: string;
+  updatedAt?: string;
+  expiresAt?: string;
 
-	sourceUrl?: string;
+  measurements?: {
+    tempC?: number;
+    apparentTempC?: number;
+    windKmh?: number;
+    windGustKmh?: number;
+    windDirection?: string;
+    rainfallMm?: number;
+    relativeHumidityPct?: number;
+    pressureHpa?: number;
+  };
 
-	raw?: unknown;
+  sourceUrl?: string;
+  raw?: unknown;
 }
 ```
 
 ### Why these fields?
 
-`id` provides a stable identifier that can be used for deduplication.
+`id` provides a stable identifier for deduplication.
 
-`source` identifies which upstream feed produced the event.
+`source` identifies the upstream feed.
 
-`type` gives downstream services a common classification for events such as bushfires, floods, severe weather and planned burns.
+`kind` distinguishes warnings, incidents and observations, while `type` preserves the source-specific classification.
 
-`severity` provides a common warning scale where a source exposes enough information to map it reliably.
+`location.geometry` uses GeoJSON so the same model can support BOM station points and VicEmergency polygons or geometry collections.
 
-`status` allows downstream services to distinguish active, updated and resolved events.
+`observedAt` is used for measured observations such as BOM data, while `issuedAt`, `updatedAt` and `expiresAt` support event lifecycle and freshness handling.
 
-`location` provides a consistent geographic structure for correlation and PostGIS-backed processing.
-
-`issuedAt`, `updatedAt` and `expiresAt` support event ordering, freshness checks and stale-data handling.
-
-`raw` preserves the original source record so source-specific information is not lost during normalisation.
+`measurements` stores structured weather values. `raw` preserves the original source record for debugging and traceability.
 
 ## Representative Field Mapping
 
-| Normalised field     | VicEmergency / CFA                                           | BOM Victoria Warnings RSS                                                                         |
-| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `id`                 | `incidentNo`                                                 | `guid`                                                                                            |
-| `source`             | Constant: `vicemergency`                                     | Constant: `bom`                                                                                   |
-| `type`               | `category2` or `incidentType`                                | Derived from `title`                                                                              |
-| `title`              | Combination of `category2`, `incidentLocation` and/or `name` | `title`                                                                                           |
-| `description`        | Derived from available incident fields                       | Not present in sampled RSS item                                                                   |
-| `severity`           | Not directly exposed in sampled incident payload             | Derived only when `title` contains an explicit level such as `Minor`, `Moderate` or `Major`       |
-| `status`             | `originStatus` / `incidentStatus`                            | `active` while the warning is present in the current feed; lifecycle handling remains provisional |
-| `location.name`      | `incidentLocation`                                           | Derived from `title`, for example `Kiewa River`                                                   |
-| `location.latitude`  | `latitude`                                                   | Not present in sampled RSS item                                                                   |
-| `location.longitude` | `longitude`                                                  | Not present in sampled RSS item                                                                   |
-| `issuedAt`           | `originDateTime`                                             | `pubDate`                                                                                         |
-| `updatedAt`          | `lastUpdatedDt`                                              | `pubDate`                                                                                         |
-| `expiresAt`          | Not present in sampled incident payload                      | Not present in sampled RSS item                                                                   |
-| `sourceUrl`          | Not present in sampled incident payload                      | `link`                                                                                            |
-| `raw`                | Entire incident object                                       | Entire RSS `item`                                                                                 |
+| Normalised field | VicEmergency GeoJSON | BOM Weather Observations |
+| --- | --- | --- |
+| `id` | `properties.id` | `wmo` + observation timestamp |
+| `source` | `vicemergency` | `bom` |
+| `kind` | `properties.feedType` | `observation` |
+| `type` | `properties.cap.event` | `weather-observation` |
+| `severity` | `properties.cap.severity` | Not applicable |
+| `location.name` | `properties.location` | `name` |
+| `location.geometry` | Source GeoJSON `geometry` | Point from `lon`, `lat` |
+| `observedAt` | Not applicable | `aifstime_utc` |
+| `issuedAt` | `properties.created` | Not applicable |
+| `updatedAt` | `properties.updated` | Not applicable |
+| `measurements.tempC` | Not applicable | `air_temp` |
+| `measurements.windKmh` | Not applicable | `wind_spd_kmh` |
+| `measurements.windGustKmh` | Not applicable | `gust_kmh` |
+| `raw` | Entire `Feature` | Entire observation object |
 
-### VicEmergency Status Normalisation
+## VicEmergency Severity and Status Handling
 
-Representative status values observed in the incident feed include:
+VicEmergency warning features may expose structured CAP metadata such as:
 
-| Source value                   | Normalised value |
-| ------------------------------ | ---------------- |
-| `Responding` / `RESPONDING`    | `active`         |
-| `Under Control` / `CONTROLLED` | `updated`        |
-| `Safe` / `SAFE`                | `resolved`       |
-| Other / unknown values         | `unknown`        |
+- `properties.cap.severity`
+- `properties.cap.urgency`
+- `properties.cap.certainty`
+- `properties.action`
 
-`originStatus` is preferred for machine-level normalisation because the sampled response provides consistent uppercase values such as `RESPONDING`, `CONTROLLED` and `SAFE`. `incidentStatus` can still be retained in `raw` for display or source-specific use.
-
-### VicEmergency Severity Handling
-
-The sampled VicEmergency incident payload does not expose a direct warning severity field. Fields such as `incidentSize`, `category1`, `category2` and incident status should not automatically be treated as severity.
-
-Severity should therefore remain undefined unless a reliable warning-level field is available from another VicEmergency product or can be mapped from an explicitly documented warning classification.
-
-### Example VicEmergency Normalisation
-
-A source incident such as:
-
-```json
-{
-	"incidentNo": 291190,
-	"incidentType": "GRASS",
-	"incidentLocation": "CORINELLA",
-	"incidentStatus": "Responding",
-	"category1": "Fire",
-	"category2": "Bushfire",
-	"latitude": -38.42628962598518,
-	"longitude": 145.46301493469034,
-	"originStatus": "RESPONDING",
-	"originDateTime": "30/08/2026 09:05:00",
-	"lastUpdatedDt": 1788044700000
-}
-```
-
-could be normalised conceptually as:
-
-```ts
-{
-  id: '291190',
-  source: 'vicemergency',
-  type: 'Bushfire',
-  title: 'Bushfire - Corinella',
-  status: 'active',
-  location: {
-    latitude: -38.42628962598518,
-    longitude: 145.46301493469034,
-    name: 'CORINELLA'
-  },
-  issuedAt: '<ISO-8601 timestamp>',
-  updatedAt: '<ISO-8601 timestamp>',
-  raw: originalRecord
-}
-```
-
-The exact timestamp conversion is an implementation detail. Where available, machine-readable timestamps such as `lastUpdatedDt` should be preferred over display-oriented date strings.
-
-### BOM Severity Handling
-
-The BOM RSS warning feed does not expose a dedicated severity field.
-
-Where the warning `title` explicitly contains a recognised level such as `Minor`, `Moderate` or `Major`, the adapter may map that term into the common severity model.
+Where an explicit severity is available, the adapter should use that source value rather than infer severity from unrelated fields.
 
 For example:
 
-| BOM title term | Normalised severity |
-| -------------- | ------------------- |
-| `Minor`        | `minor`             |
-| `Moderate`     | `moderate`          |
-| `Major`        | `severe`            |
-
-If no explicit severity term is present, severity should remain undefined rather than being inferred from unrelated wording.
-
-### BOM Status and Lifecycle Handling
-
-The sampled RSS item does not contain a dedicated status field.
-
-A warning that appears in the current feed can provisionally be treated as `active`. If a previously observed warning no longer appears in a later feed response, the adapter may treat that as a possible resolution signal, but this behaviour should remain provisional until the Bureau's feed lifecycle semantics are confirmed.
-
-The adapter should avoid marking a warning as resolved solely from absence unless the team agrees that this behaviour is acceptable.
-
-### Example BOM Normalisation
-
-A source warning such as:
-
-```xml
-<item>
-  <title>28/12:23 EST Minor Flood Warning for the Kiewa River</title>
-  <link>http://reg.bom.gov.au/vic/warnings/flood/kiewariver.shtml</link>
-  <pubDate>Fri, 28 Aug 2026 02:23:37 GMT</pubDate>
-  <guid isPermaLink="false">http://reg.bom.gov.au/vic/warnings/flood/kiewariver.shtml</guid>
-</item>
-```
-
-could be normalised conceptually as:
-
-```ts
+```json
 {
-  id: 'http://reg.bom.gov.au/vic/warnings/flood/kiewariver.shtml',
-  source: 'bom',
-  type: 'Flood Warning',
-  title: 'Minor Flood Warning for the Kiewa River',
-  severity: 'minor',
-  status: 'active',
-  location: {
-    name: 'Kiewa River'
-  },
-  issuedAt: '2026-08-28T02:23:37Z',
-  updatedAt: '2026-08-28T02:23:37Z',
-  sourceUrl: 'http://reg.bom.gov.au/vic/warnings/flood/kiewariver.shtml',
-  raw: originalRecord
+  "urgency": "Expected",
+  "severity": "Minor",
+  "certainty": "Unknown"
 }
 ```
 
-The warning type, severity and location are derived from the structured wording of the RSS `title`, while `guid`, `pubDate` and `link` can be mapped directly.
+Known severity values may be normalised to lowercase application values, for example `Minor` to `minor`.
+
+Status should be handled conservatively using explicit lifecycle information such as `properties.action`. If the source meaning is unclear, the adapter should use `unknown` rather than guess.
+
+## Example VicEmergency Normalisation
+
+A VicEmergency warning feature can be normalised conceptually as:
+
+```ts
+{
+  id: '43095',
+  source: 'vicemergency',
+  kind: 'warning',
+  type: 'Riverine Flood',
+  title: 'Advice',
+  description: 'ADVICE - RIVERINE FLOOD - Threat Is Reduced...',
+  severity: 'minor',
+
+  location: {
+    name: 'Kiewa River to Mongans bridge',
+    geometry: originalFeature.geometry
+  },
+
+  issuedAt: '2026-09-06T10:30:24+10:00',
+  updatedAt: '2026-09-06T10:30:25+10:00',
+
+  raw: originalFeature
+}
+```
+
+The original GeoJSON geometry is retained so downstream services can use the warning polygon for spatial correlation.
+
+## BOM Observation Handling
+
+BOM weather observations are measurements rather than warning events, so they do not normally require warning severity or lifecycle status.
+
+The adapter should focus on:
+
+- observation timestamp
+- station location
+- temperature
+- wind speed, direction and gust
+- rainfall
+- humidity
+- pressure
+
+The observation timestamp should be used to determine whether the data is fresh enough to be relevant.
+
+## Example BOM Normalisation
+
+A BOM observation can be normalised conceptually as:
+
+```ts
+{
+  id: 'bom:94852:20260906093000',
+  source: 'bom',
+  kind: 'observation',
+  type: 'weather-observation',
+  title: 'Weather observation - Ballarat',
+
+  location: {
+    name: 'Ballarat',
+    geometry: {
+      type: 'Point',
+      coordinates: [143.8, -37.5]
+    }
+  },
+
+  observedAt: '2026-09-06T09:30:00Z',
+
+  measurements: {
+    tempC: 10.4,
+    apparentTempC: 8.6,
+    windKmh: 7,
+    windGustKmh: 9,
+    windDirection: 'SW',
+    rainfallMm: 0,
+    relativeHumidityPct: 85,
+    pressureHpa: 1023.7
+  },
+
+  raw: originalObservation
+}
+```
+
+The normalised ID is constructed from the station identifier and observation timestamp for deterministic deduplication.
+
+The station coordinates are converted into a GeoJSON `Point`, while weather values are stored under `measurements`.
 
 ## Adapter Design
 
@@ -327,39 +379,60 @@ Each external source should be implemented behind the same adapter interface.
 
 ```ts
 export interface PublicDataAdapter<T> {
-	readonly source: string;
-	fetch(): Promise<T[]>;
-	normalise(record: T): NormalisedEvent;
+  readonly source: string;
+  fetch(): Promise<T[]>;
+  normalise(record: T): NormalisedEvent;
 }
 
 // VicEmergency adapter
-export class VicEmergencyAdapter implements PublicDataAdapter<VicEmergencyIncident> {
-	readonly source = 'vicemergency';
+export class VicEmergencyAdapter
+  implements PublicDataAdapter<GeoJSON.Feature> {
 
-	async fetch(): Promise<VicEmergencyIncident[]> {
-		// Source-specific fetch logic
-		return [];
-	}
+  readonly source = 'vicemergency';
 
-	normalise(record: VicEmergencyIncident): NormalisedEvent {
-		// Source-specific mapping
-		throw new Error('Not implemented');
-	}
+  async fetch(): Promise<GeoJSON.Feature[]> {
+    // Fetch and validate the GeoJSON FeatureCollection.
+    return [];
+  }
+
+  normalise(feature: GeoJSON.Feature): NormalisedEvent {
+    // Preserve source geometry for spatial correlation.
+    throw new Error('Not implemented');
+  }
+}
+
+export interface BomObservation {
+  wmo: number;
+  name: string;
+  aifstime_utc: string;
+  lat: number;
+  lon: number;
+  air_temp?: number;
+  apparent_t?: number;
+  wind_spd_kmh?: number;
+  gust_kmh?: number;
+  wind_dir?: string;
+  rain_trace?: string;
+  rel_hum?: number;
+  press_msl?: number;
 }
 
 // BOM adapter
-export class BomAdapter implements PublicDataAdapter<BomWarning> {
-	readonly source = 'bom';
+export class BomAdapter
+  implements PublicDataAdapter<BomObservation> {
 
-	async fetch(): Promise<BomWarning[]> {
-		// Source-specific fetch logic
-		return [];
-	}
+  readonly source = 'bom';
 
-	normalise(record: BomWarning): NormalisedEvent {
-		// Source-specific mapping
-		throw new Error('Not implemented');
-	}
+  async fetch(): Promise<BomObservation[]> {
+    // Fetch configured BOM weather observation data.
+    return [];
+  }
+
+  normalise(record: BomObservation): NormalisedEvent {
+    // Convert station coordinates to a GeoJSON Point
+    // and map weather measurements into the common schema.
+    throw new Error('Not implemented');
+  }
 }
 ```
 
@@ -370,30 +443,65 @@ External Feed
     ↓
 Source-specific Adapter
     ↓
+Validation
+    ↓
 Normalisation
     ↓
 NormalisedEvent
     ↓
 Redis Streams
     ↓
-Downstream services / Correlator
+Correlator / Dashboard
 ```
 
-Downstream services should only need to understand the normalised event shape rather than the individual structure of every upstream feed.
+Downstream services should consume the normalised event shape rather than depend directly on source-specific fields.
+
+## Spatial Correlation Approach
+
+The two feeds provide different forms of spatial evidence.
+
+For VicEmergency:
+
+```text
+Device GPS point
+    +
+VicEmergency warning polygon
+    ↓
+Point-in-polygon check
+    ↓
+Inside / outside affected area
+```
+
+For BOM:
+
+```text
+Device GPS point
+    +
+BOM station point
+    ↓
+Nearest suitable station
+    +
+Freshness check
+    ↓
+Weather evidence
+```
+
+The exact maximum station distance and freshness threshold should be agreed during correlator design.
 
 ## Feed Failure and Fallback Behaviour
 
-An unavailable external feed must not cause the Public Data Adapter service to fail completely.
+An unavailable public feed must not cause the adapter service or correlator to fail completely.
 
 When a feed request fails:
 
-1. Record the feed name, timestamp and error in application logs.
-2. Retry the failed feed using bounded exponential backoff.
+1. Record the feed name, timestamp and error.
+2. Retry using bounded exponential backoff.
 3. Continue processing other configured feeds.
 4. Do not generate guessed or synthetic events.
-5. Preserve the last successfully processed state where useful.
-6. Mark previously retrieved information as stale if it is retained.
-7. Automatically resume normal ingestion when the upstream source becomes available again.
+5. Preserve the last successful state where useful.
+6. Mark retained data as stale.
+7. Do not treat stale data as equally strong evidence as current data.
+8. Resume normal ingestion when the feed recovers.
 
 A provisional retry schedule is:
 
@@ -403,14 +511,20 @@ A provisional retry schedule is:
 - 5 minutes
 - Maximum retry interval of 5 minutes
 
+If VicEmergency is unavailable, the correlator should still be able to use device state, Telstra outage data and BOM observations.
+
+If BOM is unavailable, the correlator should still be able to use device state, Telstra outage data and VicEmergency events.
+
+A missing feed may reduce confidence, but should not prevent the correlator from producing a verdict using the remaining evidence.
+
 ## Provisional Recommendation
 
 For the initial prototype:
 
-1. Use the VicEmergency/CFA incident JSON feed as the primary emergency-event source.
-2. Use Bureau of Meteorology warning data as a secondary contextual source.
-3. Normalise both sources into the proposed `NormalisedEvent` shape.
-4. Publish normalised events to Redis Streams for downstream processing.
-5. Confirm production access and licensing requirements with the team/client before treating either external feed as a permanent dependency.
-
-Both mappings above are based on representative live responses: the VicEmergency/CFA incident JSON feed and the BOM Victoria weather warnings RSS feed. Production access, licensing and lifecycle assumptions should still be confirmed with the team/client before implementation.
+1. Use **VicEmergency GeoJSON** as the primary emergency-event source because it provides structured warning information and affected-area geometry.
+2. Use **BOM weather observations JSON** as the weather-context source because it provides station coordinates and measured temperature/wind data.
+3. Normalise both sources into `NormalisedEvent`.
+4. Preserve VicEmergency geometry for point-in-polygon correlation.
+5. Associate BOM observations with devices using nearest-station and freshness checks.
+6. Publish normalised events to Redis Streams.
+7. Confirm the final feed choice and correlation thresholds with the team/client.
