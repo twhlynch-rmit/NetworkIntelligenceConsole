@@ -38,7 +38,10 @@ server on port 3000 instead.
 
 Infrastructure: PostgreSQL `5432`, Redis `6379`, web `3000`.
 
-All HTTP services expose `GET /<service-name>/v0/health-check`.
+All HTTP services expose `GET /<service-name>/v0/health-check` (or `GET /health-check`
+for mock-loc-api). Health checks return `{ statusCode: 200, service }` when
+dependencies (Redis, PostgreSQL) are reachable, or `{ statusCode: 503, service }`
+when they are not. The correlator also checks PostgreSQL connectivity.
 
 ## Architecture Diagram
 
