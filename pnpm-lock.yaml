@@ -185,6 +185,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
+      redis:
+        specifier: ^6.2.1
+        version: 6.2.1
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -8325,7 +8328,8 @@ snapshots:
 
   yallist@3.1.1: {}
 
-  yaml@2.9.0: {}
+  yaml@2.9.0:
+    optional: true
 
   yargs-parser@21.1.1: {}
 
