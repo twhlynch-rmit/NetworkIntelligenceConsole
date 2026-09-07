@@ -88,3 +88,9 @@ workspace, so there are no per-workspace lint scripts.
   integration tests exercise the Express app via supertest.
 - The web uses Vitest + Testing Library in jsdom; API calls are mocked with
   msw (`web/src/mocks`).
+
+## Structured Logging
+
+All services use a shared JSON-line logger from `@nic/shared`.
+Each line is a JSON object with `timestamp`, `level`, `service`, `message`,
+and optional `context` field. Set `LOG_LEVEL=debug` for verbose output.
