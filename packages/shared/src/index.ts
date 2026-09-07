@@ -17,3 +17,4 @@ export type ApiResult<T> = ApiResponse<T> | ApiErrorResponse;
 
 export { createLogger } from './logger';
 export type { Logger } from './logger';
+export { checkDependency } from './health';

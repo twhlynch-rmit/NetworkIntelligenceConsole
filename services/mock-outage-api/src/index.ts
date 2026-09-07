@@ -1,8 +1,10 @@
 import { createApp, SERVICE_NAME } from './app';
+import { createLogger } from '@nic/shared';
 
+const log = createLogger(SERVICE_NAME);
 const app = createApp();
 const port = Number(process.env.PORT) || 3001;
 
 app.listen(port, () => {
-	console.log(`${SERVICE_NAME} listening on port ${port}`);
+	log.info('started', { port });
 });
