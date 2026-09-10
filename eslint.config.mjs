@@ -1,5 +1,4 @@
-import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
+import eslintReact from '@eslint-react/eslint-plugin';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -25,18 +24,7 @@ export default tseslint.config(
 	// Web frontend
 	{
 		files: ['web/**/*.{ts,tsx}'],
-		plugins: {
-			react,
-			'react-hooks': reactHooks,
-		},
-		languageOptions: {
-			parserOptions: {
-				ecmaFeatures: { jsx: true },
-			},
-		},
-		settings: {
-			react: { version: 'detect' },
-		},
+		extends: [eslintReact.configs['recommended-typescript']],
 		rules: {
 			'@typescript-eslint/no-unused-vars': [
 				'warn',
@@ -47,10 +35,6 @@ export default tseslint.config(
 			eqeqeq: 'error',
 			'no-var': 'error',
 			'prefer-const': 'warn',
-			'react/jsx-uses-react': 'error',
-			'react/jsx-uses-vars': 'error',
-			'react-hooks/rules-of-hooks': 'error',
-			'react-hooks/exhaustive-deps': 'warn',
 		},
 	},
 );
