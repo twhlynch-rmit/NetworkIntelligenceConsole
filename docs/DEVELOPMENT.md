@@ -50,8 +50,10 @@ Services only (Postgres + Redis in Docker, everything else on the host):
 
 ```sh
 docker compose up -d postgres redis
-pnpm --filter @nic/mock-outage-api dev     # tsx watch, per service
-pnpm dev                                   # web dev server on :3000
+pnpm dev:services                    # all 6 backend services with concurrently
+pnpm dev                             # web dev server on :3000
+# or run everything at once:
+pnpm dev:all
 ```
 
 ## Common Commands
@@ -71,6 +73,8 @@ Run from the repository root. Most scripts forward to each workspace with
 | `pnpm test:unit`        | Run unit tests only              |
 | `pnpm test:integration` | Run integration tests only       |
 | `pnpm dev`              | Run the web dev server           |
+| `pnpm dev:services`     | Run all 6 backend services       |
+| `pnpm dev:all`          | Run web + all backend services   |
 
 Run scripts for a single workspace with `pnpm --filter <package> <script>`, e.g.
 `pnpm --filter @nic/correlator test:watch`.
@@ -84,3 +88,9 @@ workspace, so there are no per-workspace lint scripts.
   integration tests exercise the Express app via supertest.
 - The web uses Vitest + Testing Library in jsdom; API calls are mocked with
   msw (`web/src/mocks`).
+
+## Structured Logging
+
+All services use a shared JSON-line logger from `@nic/shared`.
+Each line is a JSON object with `timestamp`, `level`, `service`, `message`,
+and optional `context` field. Set `LOG_LEVEL=debug` for verbose output.

@@ -64,7 +64,7 @@ paths:
               - SA
               - WA
               - NT
-              - NAT # TODO: NAT or INT & OT?
+              - NAT
           description: The state abbreviation of the location
           example: VIC
         - name: postcode

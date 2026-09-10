@@ -3,7 +3,7 @@ import express from 'express';
 import { createLogger, checkDependency } from '@nic/shared';
 import { createClient } from 'redis';
 
-export const SERVICE_NAME = 'results-api';
+export const SERVICE_NAME = 'public-data-adapter';
 
 let redisClient: ReturnType<typeof createClient> | null = null;
 
@@ -38,7 +38,7 @@ export function createApp() {
 
 	// Health check
 	app.get(
-		'/results-api/v0/health-check',
+		'/public-data-adapter/v0/health-check',
 		async (_req: express.Request, res: express.Response) => {
 			const redis = await getRedisStatus();
 			const statusCode = redis ? 200 : 503;

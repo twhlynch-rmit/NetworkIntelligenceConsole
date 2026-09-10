@@ -55,13 +55,13 @@ components:
     HealthCheckResponse:
       type: object
       required:
-        - status
+        - statusCode
         - service
       properties:
-        status:
-          type: string
-          description: Service health status
-          example: ok
+        statusCode:
+          type: integer
+          description: HTTP status code
+          example: 200
         service:
           type: string
           description: Name of the service

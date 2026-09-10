@@ -31,14 +31,17 @@ server on port 3000 instead.
 | ------------------- | -------------------------- | ---- | ---------------------------------------------- |
 | mock-outage-api     | `@nic/mock-outage-api`     | 3001 | Mocked Telstra-style outage status API         |
 | fleet-simulator     | `@nic/fleet-simulator`     | 3002 | Simulates device fleet, publishes events       |
+| public-data-adapter | `@nic/public-data-adapter` | 3003 | Mocks VicEmergency/BOM feeds, publishes events |
+| correlator          | `@nic/correlator`          | 3004 | Root cause correlation worker                  |
 | results-api         | `@nic/results-api`         | 3005 | Verdict store, REST API and WebSocket feed     |
 | mock-loc-api        | `@nic/mock-loc-api`        | 3006 | Mocked Loss of Connectivity subscription API   |
-| correlator          | `@nic/correlator`          | -    | Root cause correlation worker                  |
-| public-data-adapter | `@nic/public-data-adapter` | -    | Mocks VicEmergency/BOM feeds, publishes events |
 
 Infrastructure: PostgreSQL `5432`, Redis `6379`, web `3000`.
 
-All HTTP services expose `GET /<service-name>/v0/health-check`.
+All HTTP services expose `GET /<service-name>/v0/health-check` (or `GET /health-check`
+for mock-loc-api). Health checks return `{ statusCode: 200, service }` when
+dependencies (Redis, PostgreSQL) are reachable, or `{ statusCode: 503, service }`
+when they are not. The correlator also checks PostgreSQL connectivity.
 
 ## Architecture Diagram
 

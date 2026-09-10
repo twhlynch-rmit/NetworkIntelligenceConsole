@@ -24,5 +24,6 @@ COPY services/correlator/src/ ./services/correlator/src/
 
 RUN pnpm --filter @nic/shared build && pnpm --filter @nic/correlator build
 
+EXPOSE 3004
 WORKDIR /app/services/correlator
 CMD ["node", "dist/index.js"]

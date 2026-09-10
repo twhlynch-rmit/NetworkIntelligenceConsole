@@ -16,6 +16,8 @@
 		"test:unit": "pnpm -r --if-present run test:unit",
 		"test:integration": "pnpm -r --if-present run test:integration",
 		"dev": "pnpm --filter @nic/web dev",
+		"dev:services": "concurrently -n outage,fleet,pda,corr,results,loc \"pnpm --filter @nic/mock-outage-api dev\" \"pnpm --filter @nic/fleet-simulator dev\" \"pnpm --filter @nic/public-data-adapter dev\" \"pnpm --filter @nic/correlator dev\" \"pnpm --filter @nic/results-api dev\" \"pnpm --filter @nic/mock-loc-api dev\"",
+		"dev:all": "concurrently -n web,outage,fleet,pda,corr,results,loc \"pnpm dev\" \"pnpm --filter @nic/mock-outage-api dev\" \"pnpm --filter @nic/fleet-simulator dev\" \"pnpm --filter @nic/public-data-adapter dev\" \"pnpm --filter @nic/correlator dev\" \"pnpm --filter @nic/results-api dev\" \"pnpm --filter @nic/mock-loc-api dev\"",
 		"postinstall": "pnpm -r --if-present run build",
 		"prepare": "husky"
 	},
@@ -23,6 +25,7 @@
 		"@commitlint/cli": "^21.2.2",
 		"@commitlint/config-conventional": "^21.2.2",
 		"@types/node": "^26.2.0",
+		"concurrently": "^10.0.5",
 		"eslint": "^9.39.5",
 		"eslint-plugin-react": "^7.37.5",
 		"eslint-plugin-react-hooks": "^7.1.1",

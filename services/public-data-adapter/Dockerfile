@@ -24,5 +24,6 @@ COPY services/public-data-adapter/src/ ./services/public-data-adapter/src/
 
 RUN pnpm --filter @nic/shared build && pnpm --filter @nic/public-data-adapter build
 
+EXPOSE 3003
 WORKDIR /app/services/public-data-adapter
 CMD ["node", "dist/index.js"]

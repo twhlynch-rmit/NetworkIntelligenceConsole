@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HealthDashboard } from '@/components/HealthDashboard';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -9,9 +10,7 @@ const queryClient = new QueryClient({
 function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<div className="flex h-screen items-center justify-center">
-				<h1 className="text-2xl font-semibold">Network Intelligence Console</h1>
-			</div>
+			<HealthDashboard />
 		</QueryClientProvider>
 	);
 }

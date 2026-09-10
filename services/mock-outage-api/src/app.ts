@@ -9,12 +9,10 @@ export function createApp() {
 	app.use(cors());
 	app.use(express.json());
 
-	const health = (_req: express.Request, res: express.Response) => {
-		res.json({ status: 'ok', service: SERVICE_NAME });
-	};
-
-	app.get('/outage/v0/health-check', health);
-	app.get('/health-check', health);
+	// Health check
+	app.get('/outage/v0/health-check', async (_req: express.Request, res: express.Response) => {
+		res.json({ statusCode: 200, service: SERVICE_NAME });
+	});
 
 	return app;
 }
