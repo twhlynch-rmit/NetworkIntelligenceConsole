@@ -29,6 +29,46 @@ async function getRedisStatus() {
 	return ok;
 }
 
+const stubDevice = {
+	deviceId: 'SC-P-4821',
+	msisdn: '61412345678',
+	status: 'ONLINE',
+	lastKnownLocation: {
+		lat: -37.8136,
+		lon: 144.9631,
+		suburb: 'Melbourne',
+		postcode: '3000',
+		source: 'SafeCall device telemetry',
+	},
+	battery: 85,
+	signal: -75,
+	lastSeenAt: '2026-08-30T16:12:00+10:00',
+	assignedTo: 'Nurse - Melbourne',
+};
+
+const stubScenarios = [
+	{
+		name: 'hero-scenario',
+		description: 'Hero scenario - nurse pendant goes silent during bushfire',
+	},
+	{
+		name: 'mass-outage',
+		description: 'Simulates a large-scale connectivity outage',
+	},
+	{
+		name: 'battery-drain',
+		description: 'Simulates devices with rapidly draining batteries',
+	},
+	{
+		name: 'normal-ops',
+		description: 'Normal fleet operation',
+	},
+	{
+		name: 'clean',
+		description: 'Resets the simulator to a clean state',
+	},
+];
+
 export function createApp() {
 	const app = express();
 	const log = createLogger(SERVICE_NAME);
@@ -46,6 +86,32 @@ export function createApp() {
 			res.status(statusCode).json({ statusCode, service: SERVICE_NAME });
 		},
 	);
+
+	app.get('/fleet-simulator/v0/devices', (_req, res) => {
+		res.json({
+			devices: [stubDevice],
+			total: 1,
+		});
+	});
+
+	app.get('/fleet-simulator/v0/devices/:deviceId', (req, res) => {
+		res.json({
+			...stubDevice,
+			deviceId: req.params.deviceId,
+		});
+	});
+
+	app.post('/fleet-simulator/v0/devices/:deviceId/dropout', (_req, res) => {
+		res.status(202).end();
+	});
+
+	app.get('/fleet-simulator/v0/scenarios', (_req, res) => {
+		res.json(stubScenarios);
+	});
+
+	app.post('/fleet-simulator/v0/scenarios/:name/run', (_req, res) => {
+		res.status(202).end();
+	});
 
 	return app;
 }
