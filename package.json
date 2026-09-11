@@ -22,12 +22,15 @@
 		"prepare": "husky"
 	},
 	"devDependencies": {
+		"@apidevtools/json-schema-ref-parser": "^16.0.2",
 		"@commitlint/cli": "^21.2.2",
 		"@commitlint/config-conventional": "^21.2.2",
 		"@types/node": "^26.2.0",
 		"concurrently": "^10.0.5",
 		"@eslint-react/eslint-plugin": "^5.19.0",
 		"eslint": "^10.3.0",
+		"ajv": "^8.20.0",
+		"ajv-formats": "^3.0.1",
 		"husky": "^9.1.7",
 		"lint-staged": "^17.3.0",
 		"prettier": "^3.9.6",

@@ -1,0 +1,10 @@
+{
+	"name": "@nic/contract-tests",
+	"version": "1.0.0",
+	"private": true,
+	"dependencies": {
+		"ajv": "^8.20.0",
+		"ajv-formats": "^3.0.1",
+		"@apidevtools/json-schema-ref-parser": "^16.0.2"
+	}
+}
