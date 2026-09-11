@@ -69,6 +69,12 @@ describe('fleet-simulator OpenAPI contract', () => {
 		);
 	});
 
+	it('returns 404 for unknown device', async () => {
+		const response = await request(createApp()).get('/fleet-simulator/v0/devices/UNKNOWN');
+
+		expect(response.status).toBe(404);
+	});
+
 	it('validates POST /fleet-simulator/v0/devices/{deviceId}/dropout', async () => {
 		const response = await request(createApp()).post(
 			'/fleet-simulator/v0/devices/SC-P-4821/dropout',
@@ -83,6 +89,14 @@ describe('fleet-simulator OpenAPI contract', () => {
 			response.status,
 			response.body,
 		);
+	});
+
+	it('returns 404 for unknown device on dropout', async () => {
+		const response = await request(createApp()).post(
+			'/fleet-simulator/v0/devices/UNKNOWN/dropout',
+		);
+
+		expect(response.status).toBe(404);
 	});
 
 	it('validates GET /fleet-simulator/v0/scenarios', async () => {
@@ -119,5 +133,13 @@ describe('fleet-simulator OpenAPI contract', () => {
 			response.status,
 			response.body,
 		);
+	});
+
+	it('returns 404 for unknown scenario on run', async () => {
+		const response = await request(createApp()).post(
+			'/fleet-simulator/v0/scenarios/unknown/run',
+		);
+
+		expect(response.status).toBe(404);
 	});
 });

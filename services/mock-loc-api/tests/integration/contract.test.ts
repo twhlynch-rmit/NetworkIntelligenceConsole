@@ -72,6 +72,15 @@ describe('mock-loc-api OpenAPI contract', () => {
 		validateAgainstSchema(spec, 'SubscriptionsResponse', response.body);
 	});
 
+	it('returns 400 and ErrorResponse for invalid request body', async () => {
+		const response = await request(createApp())
+			.post('/loss-of-connectivity/v0/subscriptions')
+			.send({});
+
+		expect(response.status).toBe(400);
+		validateAgainstSchema(spec, 'ErrorResponse', response.body);
+	});
+
 	it('validates GET /loss-of-connectivity/v0/subscriptions', async () => {
 		const response = await request(createApp())
 			.get('/loss-of-connectivity/v0/subscriptions')
@@ -104,6 +113,15 @@ describe('mock-loc-api OpenAPI contract', () => {
 		);
 	});
 
+	it('returns 404 and ErrorResponse for unknown subscription', async () => {
+		const response = await request(createApp())
+			.get('/loss-of-connectivity/v0/subscriptions/00000000-0000-0000-0000-000000000000')
+			.set('correlation-id', '550e8400-e29b-41d4-a716-446655440000');
+
+		expect(response.status).toBe(404);
+		validateAgainstSchema(spec, 'ErrorResponse', response.body);
+	});
+
 	it('validates DELETE /loss-of-connectivity/v0/subscriptions/{subscriptionId}', async () => {
 		const response = await request(createApp())
 			.delete('/loss-of-connectivity/v0/subscriptions/a1691659-808b-48b4-bc59-69816a4b3cfd')
@@ -118,6 +136,15 @@ describe('mock-loc-api OpenAPI contract', () => {
 			response.status,
 			response.body,
 		);
+	});
+
+	it('returns 404 and ErrorResponse for unknown subscription on delete', async () => {
+		const response = await request(createApp())
+			.delete('/loss-of-connectivity/v0/subscriptions/00000000-0000-0000-0000-000000000000')
+			.set('correlation-id', '550e8400-e29b-41d4-a716-446655440000');
+
+		expect(response.status).toBe(404);
+		validateAgainstSchema(spec, 'ErrorResponse', response.body);
 	});
 
 	it('validates POST /loss-of-connectivity/v0/events', async () => {

@@ -78,6 +78,12 @@ describe('results-api OpenAPI contract', () => {
 		}
 	});
 
+	it('returns 404 for unknown device', async () => {
+		const response = await request(createApp()).get('/results-api/v0/verdicts/UNKNOWN');
+
+		expect(response.status).toBe(404);
+	});
+
 	it('validates GET /results-api/v0/stats', async () => {
 		const response = await request(createApp()).get('/results-api/v0/stats');
 

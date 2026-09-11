@@ -104,4 +104,11 @@ describe('mock-outage-api OpenAPI contract', () => {
 			response.body,
 		);
 	});
+
+	it('returns 404 and ErrorEnvelope for unknown scenario', async () => {
+		const response = await request(createApp()).post('/outage/v0/scenarios/unknown/activate');
+
+		expect(response.status).toBe(404);
+		validateAgainstSchema(spec, 'ErrorEnvelope', response.body);
+	});
 });
