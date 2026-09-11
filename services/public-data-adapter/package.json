@@ -10,6 +10,7 @@
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"test:unit": "vitest run tests/unit",
+		"test:integration": "vitest run tests/integration",
 		"test:watch": "vitest"
 	},
 	"dependencies": {
@@ -19,6 +20,7 @@
 		"redis": "^6.2.1"
 	},
 	"devDependencies": {
+		"@nic/contract-tests": "workspace:*",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.6",
 		"@types/supertest": "^7.2.1",

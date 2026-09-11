@@ -9,6 +9,7 @@
 		"build": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
+		"test:integration": "vitest run tests/integration",
 		"test:unit": "vitest run tests/unit",
 		"test:watch": "vitest"
 	},
@@ -20,6 +21,7 @@
 		"redis": "^6.2.1"
 	},
 	"devDependencies": {
+		"@nic/contract-tests": "workspace:*",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.6",
 		"@types/pg": "^8.23.1",
