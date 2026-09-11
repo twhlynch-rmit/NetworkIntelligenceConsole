@@ -1,27 +1,29 @@
-import path from 'node:path';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { loadOpenApiSpec, validateOpenApiResponse } from '@nic/contract-tests/openapi';
+import {
+	loadOpenApiSpec,
+	validateAgainstSchema,
+	validateOpenApiResponse,
+	getServiceSpecPath,
+} from '@nic/contract-tests/openapi';
 
 import { createApp } from '../../src/app';
 
-type OpenApiDocument = Awaited<ReturnType<typeof loadOpenApiSpec>>;
+import type { OpenApiDocument } from '@nic/contract-tests/openapi';
 
 describe('results-api OpenAPI contract', () => {
 	let spec: OpenApiDocument;
 
 	beforeAll(async () => {
-		spec = await loadOpenApiSpec(
-			path.resolve(process.cwd(), '../../docs/openapi/results-api.yaml'),
-		);
+		spec = await loadOpenApiSpec(getServiceSpecPath('results-api'));
 	});
 
 	it('validates GET /results-api/v0/health-check', async () => {
 		const response = await request(createApp()).get('/results-api/v0/health-check');
 
 		expect([200, 503]).toContain(response.status);
-
+		validateAgainstSchema(spec, 'HealthCheckResponse', response.body);
 		validateOpenApiResponse(
 			spec,
 			'get',
@@ -35,6 +37,13 @@ describe('results-api OpenAPI contract', () => {
 		const response = await request(createApp()).get('/results-api/v0/verdicts');
 
 		expect(response.status).toBe(200);
+		expect(response.body).toHaveProperty('verdicts');
+		expect(response.body).toHaveProperty('total');
+		expect(Array.isArray(response.body.verdicts)).toBe(true);
+
+		for (const verdict of response.body.verdicts) {
+			validateAgainstSchema(spec, 'Verdict', verdict);
+		}
 
 		validateOpenApiResponse(
 			spec,
@@ -49,7 +58,7 @@ describe('results-api OpenAPI contract', () => {
 		const response = await request(createApp()).get('/results-api/v0/verdicts/SC-P-4821');
 
 		expect(response.status).toBe(200);
-
+		validateAgainstSchema(spec, 'Verdict', response.body);
 		validateOpenApiResponse(
 			spec,
 			'get',
@@ -57,13 +66,23 @@ describe('results-api OpenAPI contract', () => {
 			response.status,
 			response.body,
 		);
+
+		expect(response.body.deviceId).toBe('SC-P-4821');
+		expect(response.body.verdict.likelyCause).toBeTruthy();
+		expect(response.body.verdict.confidence).toBeGreaterThanOrEqual(0);
+		expect(response.body.verdict.confidence).toBeLessThanOrEqual(1);
+		expect(Array.isArray(response.body.verdict.evidence)).toBe(true);
+
+		for (const item of response.body.verdict.evidence) {
+			validateAgainstSchema(spec, 'EvidenceItem', item);
+		}
 	});
 
 	it('validates GET /results-api/v0/stats', async () => {
 		const response = await request(createApp()).get('/results-api/v0/stats');
 
 		expect(response.status).toBe(200);
-
+		validateAgainstSchema(spec, 'FleetStats', response.body);
 		validateOpenApiResponse(
 			spec,
 			'get',
@@ -77,6 +96,17 @@ describe('results-api OpenAPI contract', () => {
 		const response = await request(createApp()).get('/results-api/v0/overlays');
 
 		expect(response.status).toBe(200);
+		expect(Array.isArray(response.body.outages)).toBe(true);
+		expect(Array.isArray(response.body.publicEvents)).toBe(true);
+		expect(response.body.fetchedAt).toBeTruthy();
+
+		for (const outage of response.body.outages) {
+			validateAgainstSchema(spec, 'OutageOverlay', outage);
+		}
+
+		for (const event of response.body.publicEvents) {
+			validateAgainstSchema(spec, 'PublicEventOverlay', event);
+		}
 
 		validateOpenApiResponse(
 			spec,
@@ -91,6 +121,11 @@ describe('results-api OpenAPI contract', () => {
 		const response = await request(createApp()).get('/results-api/v0/overlays/outages');
 
 		expect(response.status).toBe(200);
+		expect(Array.isArray(response.body)).toBe(true);
+
+		for (const overlay of response.body) {
+			validateAgainstSchema(spec, 'OutageOverlay', overlay);
+		}
 
 		validateOpenApiResponse(
 			spec,
@@ -105,6 +140,11 @@ describe('results-api OpenAPI contract', () => {
 		const response = await request(createApp()).get('/results-api/v0/overlays/public-events');
 
 		expect(response.status).toBe(200);
+		expect(Array.isArray(response.body)).toBe(true);
+
+		for (const overlay of response.body) {
+			validateAgainstSchema(spec, 'PublicEventOverlay', overlay);
+		}
 
 		validateOpenApiResponse(
 			spec,
