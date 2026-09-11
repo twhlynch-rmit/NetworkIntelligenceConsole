@@ -22,6 +22,15 @@ export type OpenApiDocument = {
 	components?: { schemas?: Record<string, object> };
 };
 
+const VALID_SERVICES = [
+	'correlator',
+	'fleet-simulator',
+	'mock-loc-api',
+	'mock-outage-api',
+	'public-data-adapter',
+	'results-api',
+] as const;
+
 const ajv = new Ajv({
 	allErrors: true,
 	strict: false,
@@ -114,7 +123,10 @@ export function validateOpenApiResponse(
 }
 
 export function getServiceSpecPath(serviceName: string): string {
-	const file = serviceName + '.yaml';
-	if (!file) throw new Error(`Unknown service: ${serviceName}`);
-	return path.resolve(process.cwd(), '../../docs/openapi', file);
+	if (!(VALID_SERVICES as readonly string[]).includes(serviceName)) {
+		throw new Error(
+			`Unknown service: ${serviceName}. Valid services: ${VALID_SERVICES.join(', ')}`,
+		);
+	}
+	return path.resolve(process.cwd(), '../../docs/openapi', `${serviceName}.yaml`);
 }
