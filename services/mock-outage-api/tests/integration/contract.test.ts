@@ -50,13 +50,23 @@ describe('mock-outage-api OpenAPI contract', () => {
 		expect(response.body.far_future).toEqual([]);
 	});
 
-	it('responds with 200 when query params are missing', async () => {
+	it('responds with 400 and ErrorEnvelope when query params are missing', async () => {
 		const response = await request(createApp())
 			.get('/outage/v0/status')
 			.set('Correlation-Id', 'test-id');
 
-		expect(response.status).toBe(200);
-		validateAgainstSchema(spec, 'OutageStatusResponse', response.body);
+		expect(response.status).toBe(400);
+		validateAgainstSchema(spec, 'ErrorEnvelope', response.body);
+	});
+
+	it('responds with 400 for invalid state enum value', async () => {
+		const response = await request(createApp())
+			.get('/outage/v0/status')
+			.query({ suburb: 'Melbourne', state: 'INVALID', postcode: '3000' })
+			.set('Correlation-Id', 'test-id');
+
+		expect(response.status).toBe(400);
+		validateAgainstSchema(spec, 'ErrorEnvelope', response.body);
 	});
 
 	it('validates GET /outage/v0/scenarios', async () => {
