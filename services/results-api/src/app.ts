@@ -150,6 +150,10 @@ export function createApp() {
 	});
 
 	app.get('/results-api/v0/verdicts/:deviceId', (req, res) => {
+		if (req.params.deviceId !== stubVerdict.deviceId) {
+			res.status(404).json({ error: 'Verdict not found for device' });
+			return;
+		}
 		res.json({
 			...stubVerdict,
 			deviceId: req.params.deviceId,
