@@ -33,11 +33,12 @@ const stubVerdict = {
 	deviceId: 'SC-P-4821',
 	assignedTo: 'Nurse - Ballarat South',
 	status: 'SILENT',
-	lastSeenAt: '2026-08-30T16:12:00+10:00',
+	lastSeenAt: '2026-09-06T14:32:00+10:00',
 	lastKnownLocation: {
-		lat: -37.5622,
-		lon: 143.8503,
-		suburb: 'Ballarat',
+		lat: -37.5636,
+		lon: 143.8509,
+		suburb: 'Ballarat South',
+		state: 'VIC',
 		postcode: '3350',
 		source: 'SafeCall device telemetry',
 	},
@@ -54,7 +55,7 @@ const stubVerdict = {
 		],
 		recommendedAction: 'ESCALATE_TO_WELFARE_CHECK',
 	},
-	timestamp: '2026-08-30T16:12:30+10:00',
+	timestamp: '2026-09-06T14:32:30+10:00',
 };
 
 const stubStats = {
@@ -67,9 +68,11 @@ const stubStats = {
 		OFFLINE: 5,
 	},
 	actionCounts: {
-		MONITOR: 850,
-		DISPATCH_TECHNICIAN: 50,
-		ESCALATE_TO_WELFARE_CHECK: 15,
+		MONITOR: 10,
+		DISPATCH_TECHNICIAN: 2,
+		ESCALATE_TO_WELFARE_CHECK: 1,
+		ALERT_SAFETY_COORDINATOR: 1,
+		WAIT_FOR_MAINTENANCE: 1,
 	},
 };
 
@@ -81,11 +84,11 @@ const stubOutage = {
 		type: 'Polygon',
 		coordinates: [
 			[
-				[143.84, -37.56],
-				[143.86, -37.56],
-				[143.86, -37.55],
-				[143.84, -37.55],
-				[143.84, -37.56],
+				[143.8, -37.6],
+				[143.9, -37.6],
+				[143.9, -37.5],
+				[143.8, -37.5],
+				[143.8, -37.6],
 			],
 		],
 	},
@@ -98,26 +101,27 @@ const stubPublicEvent = {
 	source: 'vicEmergency',
 	eventType: 'bushfire',
 	location: {
-		lat: -37.5622,
-		lon: 143.8503,
-		suburb: 'Ballarat',
+		lat: -37.5636,
+		lon: 143.8509,
+		suburb: 'Ballarat South',
+		state: 'VIC',
 		postcode: '3350',
 	},
 	area: {
 		type: 'Polygon',
 		coordinates: [
 			[
-				[143.82, -37.58],
-				[143.88, -37.58],
-				[143.88, -37.53],
-				[143.82, -37.53],
-				[143.82, -37.58],
+				[143.7, -37.65],
+				[144.0, -37.65],
+				[144.0, -37.45],
+				[143.7, -37.45],
+				[143.7, -37.65],
 			],
 		],
 	},
 	description: 'Bushfire warning for Ballarat region',
 	severity: 'watch-and-act',
-	publishedAt: '2026-08-30T14:00:00+10:00',
+	publishedAt: '2026-09-06T12:00:00+10:00',
 };
 
 export function createApp() {
