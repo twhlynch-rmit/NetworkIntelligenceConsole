@@ -88,6 +88,9 @@ workspace, so there are no per-workspace lint scripts.
   integration tests exercise the Express app via supertest.
 - The web uses Vitest + Testing Library in jsdom; API calls are mocked with
   msw (`web/src/mocks`).
+- Contract tests (`services/*/tests/integration/contract.test.ts`) validate
+  that every service's responses match their OpenAPI schemas using
+  [ajv](https://ajv.js.org/) via `@nic/contract-tests/openapi`.
 
 ## Structured Logging
 
