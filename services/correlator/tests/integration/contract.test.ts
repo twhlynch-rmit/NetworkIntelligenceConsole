@@ -1,27 +1,29 @@
-import path from 'node:path';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { loadOpenApiSpec, validateOpenApiResponse } from '@nic/contract-tests/openapi';
+import {
+	loadOpenApiSpec,
+	validateAgainstSchema,
+	validateOpenApiResponse,
+	getServiceSpecPath,
+} from '@nic/contract-tests/openapi';
 
 import { createApp } from '../../src/app';
 
-type OpenApiDocument = Awaited<ReturnType<typeof loadOpenApiSpec>>;
+import type { OpenApiDocument } from '@nic/contract-tests/openapi';
 
 describe('correlator OpenAPI contract', () => {
 	let spec: OpenApiDocument;
 
 	beforeAll(async () => {
-		spec = await loadOpenApiSpec(
-			path.resolve(process.cwd(), '../../docs/openapi/correlator.yaml'),
-		);
+		spec = await loadOpenApiSpec(getServiceSpecPath('correlator'));
 	});
 
 	it('validates GET /correlator/v0/health-check', async () => {
 		const response = await request(createApp()).get('/correlator/v0/health-check');
 
 		expect([200, 503]).toContain(response.status);
-
+		validateAgainstSchema(spec, 'HealthCheckResponse', response.body);
 		validateOpenApiResponse(
 			spec,
 			'get',
