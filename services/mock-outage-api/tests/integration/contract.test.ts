@@ -1,27 +1,29 @@
-import path from 'node:path';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { loadOpenApiSpec, validateOpenApiResponse } from '@nic/contract-tests/openapi';
+import {
+	loadOpenApiSpec,
+	validateAgainstSchema,
+	validateOpenApiResponse,
+	getServiceSpecPath,
+} from '@nic/contract-tests/openapi';
 
 import { createApp } from '../../src/app';
 
-type OpenApiDocument = Awaited<ReturnType<typeof loadOpenApiSpec>>;
+import type { OpenApiDocument } from '@nic/contract-tests/openapi';
 
 describe('mock-outage-api OpenAPI contract', () => {
 	let spec: OpenApiDocument;
 
 	beforeAll(async () => {
-		spec = await loadOpenApiSpec(
-			path.resolve(process.cwd(), '../../docs/openapi/mock-outage-api.yaml'),
-		);
+		spec = await loadOpenApiSpec(getServiceSpecPath('mock-outage-api'));
 	});
 
 	it('validates GET /outage/v0/health-check', async () => {
 		const response = await request(createApp()).get('/outage/v0/health-check');
 
 		expect(response.status).toBe(200);
-
+		validateAgainstSchema(spec, 'HealthCheckResponse', response.body);
 		validateOpenApiResponse(
 			spec,
 			'get',
@@ -35,21 +37,38 @@ describe('mock-outage-api OpenAPI contract', () => {
 		const response = await request(createApp())
 			.get('/outage/v0/status')
 			.set('Correlation-Id', 'test-correlation-id')
-			.query({
-				suburb: 'Melbourne',
-				state: 'VIC',
-				postcode: '3000',
-			});
+			.query({ suburb: 'Melbourne', state: 'VIC', postcode: '3000' });
 
 		expect(response.status).toBe(200);
-
+		validateAgainstSchema(spec, 'OutageStatusResponse', response.body);
 		validateOpenApiResponse(spec, 'get', '/outage/v0/status', response.status, response.body);
+
+		expect(response.body['correlation-id']).toBe('test-correlation-id');
+		expect(response.body.past).toEqual([]);
+		expect(Array.isArray(response.body.current)).toBe(true);
+		expect(response.body.near_future).toEqual([]);
+		expect(response.body.far_future).toEqual([]);
+	});
+
+	it('responds with 200 when query params are missing', async () => {
+		const response = await request(createApp())
+			.get('/outage/v0/status')
+			.set('Correlation-Id', 'test-id');
+
+		expect(response.status).toBe(200);
+		validateAgainstSchema(spec, 'OutageStatusResponse', response.body);
 	});
 
 	it('validates GET /outage/v0/scenarios', async () => {
 		const response = await request(createApp()).get('/outage/v0/scenarios');
 
 		expect(response.status).toBe(200);
+		expect(Array.isArray(response.body)).toBe(true);
+		expect(response.body.length).toBeGreaterThan(0);
+
+		for (const scenario of response.body) {
+			validateAgainstSchema(spec, 'Scenario', scenario);
+		}
 
 		validateOpenApiResponse(
 			spec,
@@ -66,7 +85,7 @@ describe('mock-outage-api OpenAPI contract', () => {
 		);
 
 		expect(response.status).toBe(200);
-
+		validateAgainstSchema(spec, 'Scenario', response.body);
 		validateOpenApiResponse(
 			spec,
 			'post',
