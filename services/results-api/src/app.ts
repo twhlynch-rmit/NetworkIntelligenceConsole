@@ -29,6 +29,101 @@ async function getRedisStatus() {
 	return ok;
 }
 
+const stubVerdict = {
+	deviceId: 'SC-P-4821',
+	assignedTo: 'Nurse - Ballarat South',
+	status: 'SILENT',
+	lastSeenAt: '2026-09-06T14:32:00+10:00',
+	lastKnownLocation: {
+		lat: -37.5636,
+		lon: 143.8509,
+		suburb: 'Ballarat South',
+		state: 'VIC',
+		postcode: '3350',
+		source: 'SafeCall device telemetry',
+	},
+	verdict: {
+		likelyCause: 'Network outage overlapping active bushfire warning',
+		confidence: 0.91,
+		evidence: [
+			{
+				source: 'TelstraOutageAPI',
+				type: 'network-outage',
+				distanceKm: 0.8,
+				severity: 'active',
+			},
+		],
+		recommendedAction: 'ESCALATE_TO_WELFARE_CHECK',
+	},
+	timestamp: '2026-09-06T14:32:30+10:00',
+};
+
+const stubStats = {
+	totalDevices: 1000,
+	statusCounts: {
+		ONLINE: 850,
+		MOVING: 100,
+		LOW_BATTERY: 30,
+		SILENT: 15,
+		OFFLINE: 5,
+	},
+	actionCounts: {
+		MONITOR: 10,
+		DISPATCH_TECHNICIAN: 2,
+		ESCALATE_TO_WELFARE_CHECK: 1,
+		ALERT_SAFETY_COORDINATOR: 1,
+		WAIT_FOR_MAINTENANCE: 1,
+	},
+};
+
+const stubOutage = {
+	outageId: 'OUT-2026-001',
+	type: 'planned-maintenance',
+	status: 'active',
+	affectedArea: {
+		type: 'Polygon',
+		coordinates: [
+			[
+				[143.8, -37.6],
+				[143.9, -37.6],
+				[143.9, -37.5],
+				[143.8, -37.5],
+				[143.8, -37.6],
+			],
+		],
+	},
+	causeHint: 'Hardware upgrade',
+	affectedDevices: 45,
+};
+
+const stubPublicEvent = {
+	eventId: 'VE2026-001',
+	source: 'vicEmergency',
+	eventType: 'bushfire',
+	location: {
+		lat: -37.5636,
+		lon: 143.8509,
+		suburb: 'Ballarat South',
+		state: 'VIC',
+		postcode: '3350',
+	},
+	area: {
+		type: 'Polygon',
+		coordinates: [
+			[
+				[143.7, -37.65],
+				[144.0, -37.65],
+				[144.0, -37.45],
+				[143.7, -37.45],
+				[143.7, -37.65],
+			],
+		],
+	},
+	description: 'Bushfire warning for Ballarat region',
+	severity: 'watch-and-act',
+	publishedAt: '2026-09-06T12:00:00+10:00',
+};
+
 export function createApp() {
 	const app = express();
 	const log = createLogger(SERVICE_NAME);
@@ -46,6 +141,44 @@ export function createApp() {
 			res.status(statusCode).json({ statusCode, service: SERVICE_NAME });
 		},
 	);
+
+	app.get('/results-api/v0/verdicts', (_req, res) => {
+		res.json({
+			verdicts: [stubVerdict],
+			total: 1,
+		});
+	});
+
+	app.get('/results-api/v0/verdicts/:deviceId', (req, res) => {
+		if (req.params.deviceId !== stubVerdict.deviceId) {
+			res.status(404).json({ error: 'Verdict not found for device' });
+			return;
+		}
+		res.json({
+			...stubVerdict,
+			deviceId: req.params.deviceId,
+		});
+	});
+
+	app.get('/results-api/v0/stats', (_req, res) => {
+		res.json(stubStats);
+	});
+
+	app.get('/results-api/v0/overlays', (_req, res) => {
+		res.json({
+			outages: [stubOutage],
+			publicEvents: [stubPublicEvent],
+			fetchedAt: new Date().toISOString(),
+		});
+	});
+
+	app.get('/results-api/v0/overlays/outages', (_req, res) => {
+		res.json([stubOutage]);
+	});
+
+	app.get('/results-api/v0/overlays/public-events', (_req, res) => {
+		res.json([stubPublicEvent]);
+	});
 
 	return app;
 }

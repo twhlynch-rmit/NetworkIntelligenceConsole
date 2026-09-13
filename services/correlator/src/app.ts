@@ -69,5 +69,10 @@ export function createApp() {
 		res.status(statusCode).json({ statusCode, service: SERVICE_NAME });
 	});
 
+	app.post('/correlator/v0/recompute/:deviceId', (req, res) => {
+		log.info('recompute triggered', { deviceId: req.params.deviceId });
+		res.status(202).json({ status: 'accepted', deviceId: req.params.deviceId });
+	});
+
 	return app;
 }

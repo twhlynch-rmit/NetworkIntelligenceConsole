@@ -32,6 +32,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthCheckResponse'
+        '503':
+          description: Service degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
 
   /correlator/v0/recompute/{deviceId}:
     post:
